@@ -1,26 +1,14 @@
-// LocalStorage manager for SmartPocket app
-// Completely clean with ZERO fake/dummy data
+// LocalStorage manager for Exchange Manager app
+// Multi-User, 4-digit PIN authentication, Admin portal, and reliable persistence
 
 const STORAGE_KEYS = {
-  PROFILE: 'sp_profile_v3',
-  BANKS: 'sp_banks_v3',
-  DAILY_SESSIONS: 'sp_daily_sessions_v3',
-  EXPENSES: 'sp_expenses_v3',
-  BANK_TX: 'sp_bank_tx_v3',
-  REASONS: 'sp_reasons_v3',
-  SAVINGS: 'sp_savings_v3',
-  INFLOWS: 'sp_inflows_v3',
+  USERS: 'em_users_v4',
+  CURRENT_USER_ID: 'em_current_user_v4',
+  ADMIN_PASSWORD: 'em_admin_pw_v4',
+  LAST_ACTIVE: 'em_last_active_v4',
 };
 
-// Clean modern SVG avatar options (User initials & clean minimal icons, no random fake model photos)
-export const DEFAULT_AVATARS = [
-  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%232563eb"/><path d="M50 48a16 16 0 100-32 16 16 0 000 32zm0 8c-18 0-32 10-32 24v4h64v-4c0-14-14-24-32-24z" fill="white"/></svg>',
-  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%230284c7"/><path d="M50 48a16 16 0 100-32 16 16 0 000 32zm0 8c-18 0-32 10-32 24v4h64v-4c0-14-14-24-32-24z" fill="white"/></svg>',
-  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%234f46e5"/><path d="M50 48a16 16 0 100-32 16 16 0 000 32zm0 8c-18 0-32 10-32 24v4h64v-4c0-14-14-24-32-24z" fill="white"/></svg>',
-  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%230d9488"/><path d="M50 48a16 16 0 100-32 16 16 0 000 32zm0 8c-18 0-32 10-32 24v4h64v-4c0-14-14-24-32-24z" fill="white"/></svg>',
-  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%23d97706"/><path d="M50 48a16 16 0 100-32 16 16 0 000 32zm0 8c-18 0-32 10-32 24v4h64v-4c0-14-14-24-32-24z" fill="white"/></svg>',
-  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%237c3aed"/><path d="M50 48a16 16 0 100-32 16 16 0 000 32zm0 8c-18 0-32 10-32 24v4h64v-4c0-14-14-24-32-24z" fill="white"/></svg>',
-];
+const DEFAULT_ADMIN_PW = 'admin123';
 
 export const CATEGORIES = [
   { id: 'food', label: 'Food & Dining', icon: 'Utensils', color: 'bg-amber-500' },
@@ -34,23 +22,8 @@ export const CATEGORIES = [
   { id: 'other', label: 'Other / Miscellaneous', icon: 'MoreHorizontal', color: 'bg-slate-500' },
 ];
 
-// ZERO fake reasons - only reasons the user actually types will be saved
-export const INITIAL_FREQUENT_REASONS = [];
-
-// ZERO fake savings goals - user adds their own real goals
-export const DEFAULT_SAVINGS_GOALS = [];
-
 export const getTodayDateKey = () => {
   const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-export const getYesterdayDateKey = (dateStr = getTodayDateKey()) => {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() - 1);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -66,141 +39,104 @@ export const formatCurrency = (amount, symbol = 'Rs.') => {
 };
 
 export const storage = {
-  getProfile: () => {
+  // --- USERS MANAGEMENT ---
+  getUsers: () => {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.PROFILE);
-      return data
-        ? JSON.parse(data)
-        : {
-            name: '',
-            avatar: '',
-            currency: 'Rs.',
-            isSetupCompleted: false,
-          };
-    } catch {
-      return {
-        name: '',
-        avatar: '',
-        currency: 'Rs.',
-        isSetupCompleted: false,
-      };
-    }
-  },
-
-  setProfile: (profile) => {
-    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
-  },
-
-  getBanks: () => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEYS.BANKS);
-      if (data) {
-        const parsed = JSON.parse(data);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-      // Blank initial bank - NO fake dummy name
-      return [
-        { id: 'bank-1', name: '', balance: 0, color: 'from-blue-600 to-indigo-700' },
-      ];
-    } catch {
-      return [
-        { id: 'bank-1', name: '', balance: 0, color: 'from-blue-600 to-indigo-700' },
-      ];
-    }
-  },
-
-  setBanks: (banks) => {
-    localStorage.setItem(STORAGE_KEYS.BANKS, JSON.stringify(banks));
-  },
-
-  getDailySessions: () => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEYS.DAILY_SESSIONS);
-      return data ? JSON.parse(data) : {};
-    } catch {
-      return {};
-    }
-  },
-
-  setDailySessions: (sessions) => {
-    localStorage.setItem(STORAGE_KEYS.DAILY_SESSIONS, JSON.stringify(sessions));
-  },
-
-  getExpenses: () => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEYS.EXPENSES);
+      const data = localStorage.getItem(STORAGE_KEYS.USERS);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
     }
   },
 
-  setExpenses: (expenses) => {
-    localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
+  setUsers: (users) => {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
   },
 
-  getBankTransactions: () => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEYS.BANK_TX);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
+  getUserById: (id) => {
+    const users = storage.getUsers();
+    return users.find((u) => u.id === id) || null;
+  },
+
+  createUser: ({ name, avatar, pin, currency = 'Rs.' }) => {
+    const users = storage.getUsers();
+    const newUser = {
+      id: 'usr-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+      name: name.trim(),
+      avatar: avatar || '',
+      pin: String(pin), // 4-digit PIN
+      currency: currency || 'Rs.',
+      isSetupCompleted: false,
+      createdAt: new Date().toISOString(),
+      banks: [{ id: 'bank-1', name: '', balance: '' }],
+      dailySessions: {},
+      expenses: [],
+      inflows: [],
+      savings: [],
+      bankTransactions: [],
+      reasons: [],
+    };
+    const updated = [...users, newUser];
+    storage.setUsers(updated);
+    storage.setCurrentUserId(newUser.id);
+    return newUser;
+  },
+
+  updateUser: (id, updatedFields) => {
+    const users = storage.getUsers();
+    const updated = users.map((u) => (u.id === id ? { ...u, ...updatedFields } : u));
+    storage.setUsers(updated);
+  },
+
+  deleteUser: (id) => {
+    const users = storage.getUsers();
+    const filtered = users.filter((u) => u.id !== id);
+    storage.setUsers(filtered);
+    if (storage.getCurrentUserId() === id) {
+      storage.setCurrentUserId(null);
     }
   },
 
-  setBankTransactions: (txs) => {
-    localStorage.setItem(STORAGE_KEYS.BANK_TX, JSON.stringify(txs));
-  },
-
-  getReasons: () => {
+  // --- CURRENT USER SESSION ---
+  getCurrentUserId: () => {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.REASONS);
-      return data ? JSON.parse(data) : [];
+      return localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID) || null;
     } catch {
-      return [];
+      return null;
     }
   },
 
-  addReason: (reason) => {
-    if (!reason || !reason.trim()) return;
-    const clean = reason.trim();
-    const list = storage.getReasons();
-    const filtered = list.filter((r) => r.toLowerCase() !== clean.toLowerCase());
-    const updated = [clean, ...filtered].slice(0, 50);
-    localStorage.setItem(STORAGE_KEYS.REASONS, JSON.stringify(updated));
-  },
-
-  // Savings Goals Storage
-  getSavingsGoals: () => {
-    try {
-      const data = localStorage.getItem(STORAGE_KEYS.SAVINGS);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
+  setCurrentUserId: (id) => {
+    if (id) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, id);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER_ID);
     }
   },
 
-  setSavingsGoals: (goals) => {
-    localStorage.setItem(STORAGE_KEYS.SAVINGS, JSON.stringify(goals));
-  },
-
-  // Inflows Storage (Cash additions & Bank deposits)
-  getInflows: () => {
+  // --- ADMIN PORTAL ---
+  getAdminPassword: () => {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.INFLOWS);
-      return data ? JSON.parse(data) : [];
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_PASSWORD) || DEFAULT_ADMIN_PW;
     } catch {
-      return [];
+      return DEFAULT_ADMIN_PW;
     }
   },
 
-  setInflows: (inflows) => {
-    localStorage.setItem(STORAGE_KEYS.INFLOWS, JSON.stringify(inflows));
+  setAdminPassword: (pw) => {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_PASSWORD, pw);
   },
 
-  getYesterdayLeftover: () => {
-    const sessions = storage.getDailySessions();
-    const expenses = storage.getExpenses();
+  verifyAdminPassword: (pw) => {
+    const current = storage.getAdminPassword();
+    return pw === current;
+  },
+
+  // Calculate yesterday's leftover for a user
+  getYesterdayLeftover: (user) => {
+    if (!user || !user.dailySessions) return 0;
+    const sessions = user.dailySessions;
+    const expenses = user.expenses || [];
     const today = getTodayDateKey();
 
     const dates = Object.keys(sessions)
@@ -222,38 +158,5 @@ export const storage = {
 
     const leftover = (starting + added) - dayCashExpenses;
     return Math.max(0, leftover);
-  },
-
-  exportAllData: () => {
-    return JSON.stringify({
-      profile: storage.getProfile(),
-      banks: storage.getBanks(),
-      dailySessions: storage.getDailySessions(),
-      expenses: storage.getExpenses(),
-      bankTransactions: storage.getBankTransactions(),
-      reasons: storage.getReasons(),
-      savings: storage.getSavingsGoals(),
-      exportedAt: new Date().toISOString(),
-    }, null, 2);
-  },
-
-  importAllData: (jsonStr) => {
-    try {
-      const data = JSON.parse(jsonStr);
-      if (data.profile) storage.setProfile(data.profile);
-      if (data.banks) storage.setBanks(data.banks);
-      if (data.dailySessions) storage.setDailySessions(data.dailySessions);
-      if (data.expenses) storage.setExpenses(data.expenses);
-      if (data.bankTransactions) storage.setBankTransactions(data.bankTransactions);
-      if (data.reasons) localStorage.setItem(STORAGE_KEYS.REASONS, JSON.stringify(data.reasons));
-      if (data.savings) storage.setSavingsGoals(data.savings);
-      return true;
-    } catch {
-      return false;
-    }
-  },
-
-  clearAllData: () => {
-    localStorage.clear();
   },
 };

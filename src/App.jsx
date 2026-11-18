@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import ProfileSelectScreen from './components/ProfileSelectScreen';
+import PinModal from './components/PinModal';
+import AdminModal from './components/AdminModal';
 import SetupProfile from './components/SetupProfile';
 import SetupBanks from './components/SetupBanks';
 import DailyPocketPage from './components/DailyPocketPage';
@@ -8,95 +11,257 @@ import BankModal from './components/BankModal';
 import SettingsModal from './components/SettingsModal';
 import AddCashModal from './components/AddCashModal';
 import { storage, getTodayDateKey } from './utils/storage';
+import { sound } from './utils/sound';
 
 export default function App() {
-  // Core persistent state
-  const [profile, setProfile] = useState(() => storage.getProfile());
-  const [banks, setBanks] = useState(() => storage.getBanks());
-  const [dailySessions, setDailySessions] = useState(() => storage.getDailySessions());
-  const [expenses, setExpenses] = useState(() => storage.getExpenses());
-  const [inflows, setInflows] = useState(() => storage.getInflows());
-  const [bankTransactions, setBankTransactions] = useState(() => storage.getBankTransactions());
-  const [frequentReasons, setFrequentReasons] = useState(() => storage.getReasons());
-  const [savingsGoals, setSavingsGoals] = useState(() => storage.getSavingsGoals());
+  // 1. Multi-User Storage State
+  const [users, setUsers] = useState(() => storage.getUsers());
+  const [currentUserId, setCurrentUserId] = useState(() => storage.getCurrentUserId());
 
-  // Setup navigation step (if setup not completed)
-  // 1 = Profile setup, 2 = Banks setup
-  const [setupStep, setSetupStep] = useState(1);
+  // 2. Active User Object
+  const currentUser = users.find((u) => u.id === currentUserId) || null;
 
-  // Active dashboard tab ('overview' | 'savings' | 'analytics')
+  // 3. User Selection & PIN Unlock State
+  const [selectedUserForPin, setSelectedUserForPin] = useState(null);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+
+  // 4. Admin Portal State
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+
+  // 5. User Creation State
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [creationStep, setCreationStep] = useState(1); // 1 = Profile & PIN, 2 = Banks
+  const [tempProfileData, setTempProfileData] = useState(null);
+
+  // 6. Active Dashboard Tab ('overview' | 'savings' | 'analytics')
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Daily check-in gate state
-  const todayKey = getTodayDateKey();
-  const todaySession = dailySessions[todayKey];
-  const [showDailyCheckin, setShowDailyCheckin] = useState(false);
-
-  // Modals state
+  // 7. Modals
   const [bankModalOpen, setBankModalOpen] = useState(false);
-  const [bankModalMode, setBankModalMode] = useState('add_money'); // 'add_money' or 's1_manager'
+  const [bankModalMode, setBankModalMode] = useState('add_money');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addCashModalOpen, setAddCashModalOpen] = useState(false);
+  const [forceDailyCheckin, setForceDailyCheckin] = useState(false);
 
-  // Check if today needs initial pocket money entry
+  // Save currentUserId changes to localStorage
   useEffect(() => {
-    if (profile.isSetupCompleted && !todaySession) {
-      setShowDailyCheckin(true);
+    storage.setCurrentUserId(currentUserId);
+  }, [currentUserId]);
+
+  // Helper to reload users from storage
+  const reloadUsersFromStorage = () => {
+    const fresh = storage.getUsers();
+    setUsers(fresh);
+  };
+
+  // Helper to mutate active user fields in state and storage
+  const updateCurrentUserFields = (updatedFields) => {
+    if (!currentUser) return;
+    const updatedUsers = users.map((u) => {
+      if (u.id === currentUser.id) {
+        return { ...u, ...updatedFields };
+      }
+      return u;
+    });
+    storage.setUsers(updatedUsers);
+    setUsers(updatedUsers);
+  };
+
+  // Switch / Logout active profile
+  const handleSwitchProfile = () => {
+    sound.playClick();
+    setCurrentUserId(null);
+    storage.setCurrentUserId(null);
+  };
+
+  // Select profile from list -> Prompt PIN
+  const handleProfileCardClick = (user) => {
+    setSelectedUserForPin(user);
+    setPinModalOpen(true);
+  };
+
+  // PIN verified successfully
+  const handlePinSuccess = (userId) => {
+    setPinModalOpen(false);
+    setSelectedUserForPin(null);
+    setCurrentUserId(userId);
+    storage.setCurrentUserId(userId);
+  };
+
+  // Delete user from Admin portal
+  const handleAdminDeleteUser = (userId) => {
+    storage.deleteUser(userId);
+    const updated = storage.getUsers();
+    setUsers(updated);
+    if (currentUserId === userId) {
+      setCurrentUserId(null);
     }
-  }, [profile.isSetupCompleted, todaySession]);
-
-  // Sync state helpers
-  const handleReloadAllData = () => {
-    setProfile(storage.getProfile());
-    setBanks(storage.getBanks());
-    setDailySessions(storage.getDailySessions());
-    setExpenses(storage.getExpenses());
-    setBankTransactions(storage.getBankTransactions());
-    setFrequentReasons(storage.getReasons());
-    setSavingsGoals(storage.getSavingsGoals());
-    setInflows(storage.getInflows());
   };
 
-  // 1. Setup Step 1 -> Step 2
-  const handleProfileSetupComplete = (newProfileData) => {
-    const updated = {
-      ...profile,
-      ...newProfileData,
-    };
-    storage.setProfile(updated);
-    setProfile(updated);
-    setSetupStep(2);
+  // Self Delete Account from User Settings
+  const handleDeleteCurrentAccount = (userId) => {
+    storage.deleteUser(userId);
+    const updated = storage.getUsers();
+    setUsers(updated);
+    setCurrentUserId(null);
+    storage.setCurrentUserId(null);
   };
 
-  // 2. Setup Step 2 -> Complete Setup
-  const handleBanksSetupComplete = (initialBanks) => {
-    const updatedProfile = {
-      ...profile,
-      isSetupCompleted: true,
-    };
-    storage.setProfile(updatedProfile);
-    storage.setBanks(initialBanks);
-    setProfile(updatedProfile);
-    setBanks(initialBanks);
-
-    // Open Daily Pocket Money Check-In page directly after setup!
-    setShowDailyCheckin(true);
+  // -------------------------------------------------------------
+  // USER CREATION FLOW (Profile + PIN -> Banks -> Dashboard)
+  // -------------------------------------------------------------
+  const handleStartCreateUser = () => {
+    setTempProfileData(null);
+    setCreationStep(1);
+    setIsCreatingUser(true);
   };
 
-  // 3. Daily Pocket Money Submitted
-  const handlePocketMoneySubmit = (startingAmount) => {
-    const updatedSessions = {
-      ...dailySessions,
-      [todayKey]: {
-        date: todayKey,
-        startingPocketMoney: startingAmount,
-        lastLogged: new Date().toISOString(),
-      },
-    };
-    storage.setDailySessions(updatedSessions);
-    setDailySessions(updatedSessions);
-    setShowDailyCheckin(false);
+  const handleCreateProfileNext = (profileData) => {
+    setTempProfileData(profileData);
+    setCreationStep(2);
   };
+
+  const handleCreateBanksComplete = (banks) => {
+    const newUser = storage.createUser({
+      name: tempProfileData.name,
+      avatar: tempProfileData.avatar,
+      currency: tempProfileData.currency,
+      pin: tempProfileData.pin,
+    });
+
+    // Update with configured banks and mark setup complete
+    const updatedUsers = storage.getUsers().map((u) => {
+      if (u.id === newUser.id) {
+        return {
+          ...u,
+          isSetupCompleted: true,
+          banks: banks.filter((b) => b.name && b.name.trim() !== ''),
+        };
+      }
+      return u;
+    });
+
+    storage.setUsers(updatedUsers);
+    setUsers(updatedUsers);
+    setCurrentUserId(newUser.id);
+    setIsCreatingUser(false);
+    setCreationStep(1);
+    setTempProfileData(null);
+    setForceDailyCheckin(true);
+  };
+
+  // -------------------------------------------------------------
+  // ROUTE 1: Creation Mode
+  // -------------------------------------------------------------
+  if (isCreatingUser) {
+    if (creationStep === 1) {
+      return (
+        <SetupProfile
+          initialProfile={{}}
+          onNext={handleCreateProfileNext}
+          onCancel={users.length > 0 ? () => setIsCreatingUser(false) : null}
+        />
+      );
+    }
+    return (
+      <SetupBanks
+        currency={tempProfileData?.currency || 'Rs.'}
+        initialBanks={[{ id: 'bank-1', name: '', balance: '' }]}
+        onBack={() => setCreationStep(1)}
+        onComplete={handleCreateBanksComplete}
+      />
+    );
+  }
+
+  // -------------------------------------------------------------
+  // ROUTE 2: No User Selected -> Profile Select Screen
+  // -------------------------------------------------------------
+  if (!currentUser) {
+    return (
+      <>
+        <ProfileSelectScreen
+          users={users}
+          onSelectUser={handleProfileCardClick}
+          onCreateNew={handleStartCreateUser}
+          onOpenAdmin={() => setAdminModalOpen(true)}
+        />
+
+        {/* 4-Digit PIN Unlock Modal */}
+        <PinModal
+          isOpen={pinModalOpen}
+          user={selectedUserForPin}
+          onClose={() => {
+            setPinModalOpen(false);
+            setSelectedUserForPin(null);
+          }}
+          onSuccess={handlePinSuccess}
+        />
+
+        {/* Admin Portal Modal */}
+        <AdminModal
+          isOpen={adminModalOpen}
+          onClose={() => setAdminModalOpen(false)}
+          users={users}
+          onDeleteUser={handleAdminDeleteUser}
+          onReloadUsers={reloadUsersFromStorage}
+        />
+      </>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // ACTIVE USER CONTEXT & CALCULATIONS
+  // -------------------------------------------------------------
+  const todayKey = getTodayDateKey();
+  const dailySessions = currentUser.dailySessions || {};
+  const todaySession = dailySessions[todayKey];
+  const banks = currentUser.banks || [];
+  const expenses = currentUser.expenses || [];
+  const inflows = currentUser.inflows || [];
+  const bankTransactions = currentUser.bankTransactions || [];
+  const frequentReasons = currentUser.reasons || [];
+  const savingsGoals = currentUser.savings || [];
+  const currency = currentUser.currency || 'Rs.';
+
+  // Yesterday's leftover pocket money
+  const yesterdayLeftover = storage.getYesterdayLeftover(currentUser);
+
+  // Calculations for today
+  const startingPocketMoney =
+    (todaySession?.startingPocketMoney || 0) + (todaySession?.addedCash || 0);
+  const todayCashExpenses = expenses
+    .filter((e) => e.date === todayKey && e.paymentMethod === 'cash')
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const todayPocketRemaining = Math.max(0, startingPocketMoney - todayCashExpenses);
+
+  // -------------------------------------------------------------
+  // ROUTE 3: Daily Pocket Money Gate (Page 3)
+  // -------------------------------------------------------------
+  if (!todaySession || forceDailyCheckin) {
+    return (
+      <DailyPocketPage
+        profile={currentUser}
+        yesterdayLeftover={yesterdayLeftover}
+        currentStartingPocket={startingPocketMoney}
+        onProceed={(startingAmount) => {
+          const updatedSessions = {
+            ...dailySessions,
+            [todayKey]: {
+              date: todayKey,
+              startingPocketMoney: startingAmount,
+              lastLogged: new Date().toISOString(),
+            },
+          };
+          updateCurrentUserFields({ dailySessions: updatedSessions });
+          setForceDailyCheckin(false);
+        }}
+      />
+    );
+  }
+
+  // -------------------------------------------------------------
+  // ACTIVE USER ACTIONS & MUTATIONS
+  // -------------------------------------------------------------
 
   // Add Expense
   const handleAddExpense = ({ amount, reason, category, paymentMethod, bankId, bankName }) => {
@@ -117,16 +282,14 @@ export default function App() {
     };
 
     const updatedExpenses = [newExpense, ...expenses];
-    storage.setExpenses(updatedExpenses);
-    setExpenses(updatedExpenses);
+    const updatedReasons = Array.from(new Set([reason.trim(), ...frequentReasons])).slice(0, 30);
 
-    // Save reason for autocomplete
-    storage.addReason(reason);
-    setFrequentReasons(storage.getReasons());
+    let updatedBanks = [...banks];
+    let updatedTxs = [...bankTransactions];
 
-    // If paid via Bank Card, deduct from that Bank's balance!
+    // If card payment, deduct from selected bank
     if (paymentMethod === 'card' && bankId) {
-      const updatedBanks = banks.map((b) => {
+      updatedBanks = banks.map((b) => {
         if (b.id === bankId) {
           return {
             ...b,
@@ -135,10 +298,7 @@ export default function App() {
         }
         return b;
       });
-      storage.setBanks(updatedBanks);
-      setBanks(updatedBanks);
 
-      // Record bank activity
       const newTx = {
         id: 'tx-' + Date.now(),
         bankId,
@@ -149,10 +309,15 @@ export default function App() {
         date: todayKey,
         timestamp: Date.now(),
       };
-      const updatedTxs = [newTx, ...bankTransactions];
-      storage.setBankTransactions(updatedTxs);
-      setBankTransactions(updatedTxs);
+      updatedTxs = [newTx, ...bankTransactions];
     }
+
+    updateCurrentUserFields({
+      expenses: updatedExpenses,
+      reasons: updatedReasons,
+      banks: updatedBanks,
+      bankTransactions: updatedTxs,
+    });
   };
 
   // Delete Expense
@@ -160,9 +325,9 @@ export default function App() {
     const target = expenses.find((e) => e.id === id);
     if (!target) return;
 
-    // If it was a card expense, refund to bank
+    let updatedBanks = [...banks];
     if (target.paymentMethod === 'card' && target.bankId) {
-      const updatedBanks = banks.map((b) => {
+      updatedBanks = banks.map((b) => {
         if (b.id === target.bankId) {
           return {
             ...b,
@@ -171,16 +336,16 @@ export default function App() {
         }
         return b;
       });
-      storage.setBanks(updatedBanks);
-      setBanks(updatedBanks);
     }
 
-    const updated = expenses.filter((e) => e.id !== id);
-    storage.setExpenses(updated);
-    setExpenses(updated);
+    const updatedExpenses = expenses.filter((e) => e.id !== id);
+    updateCurrentUserFields({
+      expenses: updatedExpenses,
+      banks: updatedBanks,
+    });
   };
 
-  // Add money to bank account
+  // Add Bank Deposit
   const handleAddBankMoney = ({ bankId, amount, note }) => {
     let targetBankName = '';
     const updatedBanks = banks.map((b) => {
@@ -193,8 +358,6 @@ export default function App() {
       }
       return b;
     });
-    storage.setBanks(updatedBanks);
-    setBanks(updatedBanks);
 
     const newTx = {
       id: 'tx-' + Date.now(),
@@ -206,11 +369,7 @@ export default function App() {
       date: todayKey,
       timestamp: Date.now(),
     };
-    const updatedTxs = [newTx, ...bankTransactions];
-    storage.setBankTransactions(updatedTxs);
-    setBankTransactions(updatedTxs);
 
-    // Also record in inflows
     const newInflow = {
       id: 'inf-' + Date.now(),
       amount: Number(amount),
@@ -222,17 +381,19 @@ export default function App() {
       time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       timestamp: Date.now(),
     };
-    const updatedInflows = [newInflow, ...inflows];
-    storage.setInflows(updatedInflows);
-    setInflows(updatedInflows);
+
+    updateCurrentUserFields({
+      banks: updatedBanks,
+      bankTransactions: [newTx, ...bankTransactions],
+      inflows: [newInflow, ...inflows],
+    });
   };
 
-  // Add Cash directly to Pocket Money (User requirement)
+  // Add Cash directly to Pocket Money
   const handleAddCash = ({ amount, note }) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    // Update today's pocket cash
     const currentStarting = todaySession?.startingPocketMoney || 0;
     const currentAdded = todaySession?.addedCash || 0;
     const updatedSessions = {
@@ -245,10 +406,7 @@ export default function App() {
         lastLogged: new Date().toISOString(),
       },
     };
-    storage.setDailySessions(updatedSessions);
-    setDailySessions(updatedSessions);
 
-    // Record Inflow
     const newInflow = {
       id: 'inf-' + Date.now(),
       amount: Number(amount),
@@ -260,29 +418,32 @@ export default function App() {
       time: timeStr,
       timestamp: Date.now(),
     };
-    const updatedInflows = [newInflow, ...inflows];
-    storage.setInflows(updatedInflows);
-    setInflows(updatedInflows);
+
+    updateCurrentUserFields({
+      dailySessions: updatedSessions,
+      inflows: [newInflow, ...inflows],
+    });
   };
 
-  // Delete Inflow / Received money
+  // Delete Inflow / Money received
   const handleDeleteInflow = (id) => {
     const target = inflows.find((i) => i.id === id);
     if (!target) return;
 
+    let updatedSessions = dailySessions;
+    let updatedBanks = banks;
+
     if (target.destination === 'pocket') {
       const currentAdded = todaySession?.addedCash || 0;
-      const updatedSessions = {
+      updatedSessions = {
         ...dailySessions,
         [todayKey]: {
           ...todaySession,
           addedCash: Math.max(0, currentAdded - Number(target.amount)),
         },
       };
-      storage.setDailySessions(updatedSessions);
-      setDailySessions(updatedSessions);
     } else if (target.destination === 'bank' && target.bankId) {
-      const updatedBanks = banks.map((b) => {
+      updatedBanks = banks.map((b) => {
         if (b.id === target.bankId) {
           return {
             ...b,
@@ -291,16 +452,16 @@ export default function App() {
         }
         return b;
       });
-      storage.setBanks(updatedBanks);
-      setBanks(updatedBanks);
     }
 
-    const updated = inflows.filter((i) => i.id !== id);
-    storage.setInflows(updated);
-    setInflows(updated);
+    updateCurrentUserFields({
+      dailySessions: updatedSessions,
+      banks: updatedBanks,
+      inflows: inflows.filter((i) => i.id !== id),
+    });
   };
 
-  // ATM / Bank Withdrawal to Cash (deduct bank, add to today's starting cash)
+  // ATM / Bank Withdrawal to Cash
   const handleWithdrawToPocket = ({ bankId, amount, note }) => {
     let targetBankName = '';
     const updatedBanks = banks.map((b) => {
@@ -313,10 +474,7 @@ export default function App() {
       }
       return b;
     });
-    storage.setBanks(updatedBanks);
-    setBanks(updatedBanks);
 
-    // Increase today's starting pocket money
     const currentStarting = todaySession?.startingPocketMoney || 0;
     const newStarting = currentStarting + Number(amount);
     const updatedSessions = {
@@ -327,8 +485,6 @@ export default function App() {
         lastLogged: new Date().toISOString(),
       },
     };
-    storage.setDailySessions(updatedSessions);
-    setDailySessions(updatedSessions);
 
     const newTx = {
       id: 'tx-' + Date.now(),
@@ -340,59 +496,58 @@ export default function App() {
       date: todayKey,
       timestamp: Date.now(),
     };
-    const updatedTxs = [newTx, ...bankTransactions];
-    storage.setBankTransactions(updatedTxs);
-    setBankTransactions(updatedTxs);
+
+    updateCurrentUserFields({
+      banks: updatedBanks,
+      dailySessions: updatedSessions,
+      bankTransactions: [newTx, ...bankTransactions],
+    });
   };
 
-  // Update Banks in bulk from S1 Modal
+  // Update Banks in bulk from Accounts modal
   const handleUpdateBanks = (updatedBanks) => {
-    storage.setBanks(updatedBanks);
-    setBanks(updatedBanks);
+    updateCurrentUserFields({ banks: updatedBanks });
   };
 
-  // Update Profile
+  // Update Profile & Settings
   const handleUpdateProfile = (updatedProfile) => {
-    storage.setProfile(updatedProfile);
-    setProfile(updatedProfile);
+    updateCurrentUserFields(updatedProfile);
   };
 
-  // --- Savings Module Handlers ---
+  // --- Savings Handlers ---
   const handleAddGoal = (goal) => {
-    const updated = [goal, ...savingsGoals];
-    storage.setSavingsGoals(updated);
-    setSavingsGoals(updated);
+    updateCurrentUserFields({ savings: [goal, ...savingsGoals] });
   };
 
   const handleUpdateGoal = (updatedGoal) => {
-    const updated = savingsGoals.map((g) => (g.id === updatedGoal.id ? updatedGoal : g));
-    storage.setSavingsGoals(updated);
-    setSavingsGoals(updated);
+    updateCurrentUserFields({
+      savings: savingsGoals.map((g) => (g.id === updatedGoal.id ? updatedGoal : g)),
+    });
   };
 
   const handleDeleteGoal = (goalId) => {
-    const updated = savingsGoals.filter((g) => g.id !== goalId);
-    storage.setSavingsGoals(updated);
-    setSavingsGoals(updated);
+    updateCurrentUserFields({
+      savings: savingsGoals.filter((g) => g.id !== goalId),
+    });
   };
 
   const handleDepositToGoal = ({ goalId, amount, source, bankId }) => {
-    // 1. Deduct from source
+    let updatedSessions = dailySessions;
+    let updatedBanks = banks;
+    let updatedTxs = bankTransactions;
+
     if (source === 'pocket') {
       const currentStarting = todaySession?.startingPocketMoney || 0;
-      const updatedStarting = Math.max(0, currentStarting - Number(amount));
-      const updatedSessions = {
+      updatedSessions = {
         ...dailySessions,
         [todayKey]: {
           ...todaySession,
-          startingPocketMoney: updatedStarting,
+          startingPocketMoney: Math.max(0, currentStarting - Number(amount)),
         },
       };
-      storage.setDailySessions(updatedSessions);
-      setDailySessions(updatedSessions);
     } else if (source === 'bank' && bankId) {
       let targetBankName = '';
-      const updatedBanks = banks.map((b) => {
+      updatedBanks = banks.map((b) => {
         if (b.id === bankId) {
           targetBankName = b.name;
           return {
@@ -402,10 +557,7 @@ export default function App() {
         }
         return b;
       });
-      storage.setBanks(updatedBanks);
-      setBanks(updatedBanks);
 
-      // Record bank activity
       const newTx = {
         id: 'tx-' + Date.now(),
         bankId,
@@ -416,12 +568,9 @@ export default function App() {
         date: todayKey,
         timestamp: Date.now(),
       };
-      const updatedTxs = [newTx, ...bankTransactions];
-      storage.setBankTransactions(updatedTxs);
-      setBankTransactions(updatedTxs);
+      updatedTxs = [newTx, ...bankTransactions];
     }
 
-    // 2. Add to Savings Goal
     const updatedGoals = savingsGoals.map((g) => {
       if (g.id === goalId) {
         return {
@@ -431,27 +580,32 @@ export default function App() {
       }
       return g;
     });
-    storage.setSavingsGoals(updatedGoals);
-    setSavingsGoals(updatedGoals);
+
+    updateCurrentUserFields({
+      dailySessions: updatedSessions,
+      banks: updatedBanks,
+      bankTransactions: updatedTxs,
+      savings: updatedGoals,
+    });
   };
 
   const handleWithdrawFromGoal = ({ goalId, amount, destination, bankId }) => {
-    // 1. Add back to destination
+    let updatedSessions = dailySessions;
+    let updatedBanks = banks;
+    let updatedTxs = bankTransactions;
+
     if (destination === 'pocket') {
       const currentStarting = todaySession?.startingPocketMoney || 0;
-      const updatedStarting = currentStarting + Number(amount);
-      const updatedSessions = {
+      updatedSessions = {
         ...dailySessions,
         [todayKey]: {
           ...todaySession,
-          startingPocketMoney: updatedStarting,
+          startingPocketMoney: currentStarting + Number(amount),
         },
       };
-      storage.setDailySessions(updatedSessions);
-      setDailySessions(updatedSessions);
     } else if (destination === 'bank' && bankId) {
       let targetBankName = '';
-      const updatedBanks = banks.map((b) => {
+      updatedBanks = banks.map((b) => {
         if (b.id === bankId) {
           targetBankName = b.name;
           return {
@@ -461,8 +615,6 @@ export default function App() {
         }
         return b;
       });
-      storage.setBanks(updatedBanks);
-      setBanks(updatedBanks);
 
       const newTx = {
         id: 'tx-' + Date.now(),
@@ -474,12 +626,9 @@ export default function App() {
         date: todayKey,
         timestamp: Date.now(),
       };
-      const updatedTxs = [newTx, ...bankTransactions];
-      storage.setBankTransactions(updatedTxs);
-      setBankTransactions(updatedTxs);
+      updatedTxs = [newTx, ...bankTransactions];
     }
 
-    // 2. Deduct from Savings Goal
     const updatedGoals = savingsGoals.map((g) => {
       if (g.id === goalId) {
         return {
@@ -489,74 +638,33 @@ export default function App() {
       }
       return g;
     });
-    storage.setSavingsGoals(updatedGoals);
-    setSavingsGoals(updatedGoals);
+
+    updateCurrentUserFields({
+      dailySessions: updatedSessions,
+      banks: updatedBanks,
+      bankTransactions: updatedTxs,
+      savings: updatedGoals,
+    });
   };
 
-  // Calculations for today
-  const startingPocketMoney = (todaySession?.startingPocketMoney || 0) + (todaySession?.addedCash || 0);
-  const todayCashExpenses = expenses
-    .filter((e) => e.date === todayKey && e.paymentMethod === 'cash')
-    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-  const todayPocketRemaining = Math.max(0, startingPocketMoney - todayCashExpenses);
-  const totalBankBalance = banks.reduce((sum, b) => sum + (Number(b.balance) || 0), 0);
-  const totalSavedMoney = savingsGoals.reduce((sum, g) => sum + (Number(g.currentAmount) || 0), 0);
-
-  // Yesterday's leftover pocket money
-  const yesterdayLeftover = storage.getYesterdayLeftover();
-
   // -------------------------------------------------------------
-  // ROUTE 1: First-Time Setup (Page 1 & Page 2)
-  // -------------------------------------------------------------
-  if (!profile.isSetupCompleted) {
-    if (setupStep === 1) {
-      return (
-        <SetupProfile
-          initialProfile={profile}
-          onNext={handleProfileSetupComplete}
-        />
-      );
-    }
-    return (
-      <SetupBanks
-        currency={profile.currency}
-        initialBanks={banks}
-        onBack={() => setSetupStep(1)}
-        onComplete={handleBanksSetupComplete}
-      />
-    );
-  }
-
-  // -------------------------------------------------------------
-  // ROUTE 2: Daily Pocket Money Check-In (Page 3)
-  // -------------------------------------------------------------
-  if (showDailyCheckin) {
-    return (
-      <DailyPocketPage
-        profile={profile}
-        yesterdayLeftover={yesterdayLeftover}
-        currentStartingPocket={startingPocketMoney}
-        onProceed={handlePocketMoneySubmit}
-      />
-    );
-  }
-
-  // -------------------------------------------------------------
-  // ROUTE 3: Main Summary / Dashboard Page
+  // ROUTE 4: Main Dashboard View
   // -------------------------------------------------------------
   return (
     <div className="min-h-screen bg-slate-100 flex justify-center overflow-x-hidden">
       <div className="w-full max-w-md bg-slate-50/50 min-h-screen shadow-2xl border-x border-slate-200/60 flex flex-col overflow-x-hidden">
-        {/* Top Navigation Bar (Clean & Minimalist) */}
+        
+        {/* Top Navigation Bar */}
         <Navbar
-          profile={profile}
+          profile={currentUser}
           onOpenSettings={() => setSettingsOpen(true)}
+          onSwitchProfile={handleSwitchProfile}
         />
 
         {/* Main Dashboard Body */}
         <main className="flex-1 pb-8">
           <SummaryDashboard
-            profile={profile}
+            profile={currentUser}
             banks={banks}
             startingPocketMoney={startingPocketMoney}
             expenses={expenses}
@@ -574,7 +682,7 @@ export default function App() {
               setBankModalOpen(true);
             }}
             onOpenAddCash={() => setAddCashModalOpen(true)}
-            onOpenDailyCheckin={() => setShowDailyCheckin(true)}
+            onOpenDailyCheckin={() => setForceDailyCheckin(true)}
             onAddExpense={handleAddExpense}
             onDeleteExpense={handleDeleteExpense}
             onDeleteInflow={handleDeleteInflow}
@@ -593,29 +701,30 @@ export default function App() {
         mode={bankModalMode}
         onClose={() => setBankModalOpen(false)}
         banks={banks}
-        currency={profile.currency}
+        currency={currency}
         onUpdateBanks={handleUpdateBanks}
         onAddBankMoney={handleAddBankMoney}
         onWithdrawToPocket={handleWithdrawToPocket}
         bankTransactions={bankTransactions}
       />
 
-      {/* Add Cash Modal (User requirement: Add cash into pocket directly) */}
+      {/* Add Cash Modal */}
       <AddCashModal
         isOpen={addCashModalOpen}
         onClose={() => setAddCashModalOpen(false)}
-        currency={profile.currency}
+        currency={currency}
         todayPocketRemaining={todayPocketRemaining}
         onAddCash={handleAddCash}
       />
 
-      {/* Settings Modal (Edit Profile, Export/Import, Reset) */}
+      {/* Settings Modal (Edit Profile, Change PIN, Delete My Account) */}
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        profile={profile}
+        profile={currentUser}
         onUpdateProfile={handleUpdateProfile}
-        onReloadAllData={handleReloadAllData}
+        onDeleteCurrentAccount={handleDeleteCurrentAccount}
+        onReloadAllData={reloadUsersFromStorage}
       />
     </div>
   );
