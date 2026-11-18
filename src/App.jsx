@@ -147,7 +147,7 @@ export default function App() {
     setIsCreatingUser(false);
     setCreationStep(1);
     setTempProfileData(null);
-    setForceDailyCheckin(true);
+    setForceDailyCheckin(false); // Go directly to dashboard!
   };
 
   // -------------------------------------------------------------
@@ -235,9 +235,9 @@ export default function App() {
   const todayPocketRemaining = Math.max(0, startingPocketMoney - todayCashExpenses);
 
   // -------------------------------------------------------------
-  // ROUTE 3: Daily Pocket Money Gate (Page 3)
+  // ROUTE 3: Daily Pocket Money (Optional: only when user clicks "Set / Edit")
   // -------------------------------------------------------------
-  if (!todaySession || forceDailyCheckin) {
+  if (forceDailyCheckin) {
     return (
       <DailyPocketPage
         profile={currentUser}
@@ -255,6 +255,7 @@ export default function App() {
           updateCurrentUserFields({ dailySessions: updatedSessions });
           setForceDailyCheckin(false);
         }}
+        onSkip={() => setForceDailyCheckin(false)}
       />
     );
   }

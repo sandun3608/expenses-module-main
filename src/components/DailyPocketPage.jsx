@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sun, CloudSun, Moon, Wallet, ArrowRight, History, User } from 'lucide-react';
+import { Sun, CloudSun, Moon, Wallet, ArrowRight, History, User, X } from 'lucide-react';
 import { sound } from '../utils/sound';
 import { formatCurrency } from '../utils/storage';
 
@@ -8,6 +8,7 @@ export default function DailyPocketPage({
   yesterdayLeftover = 0,
   currentStartingPocket = 0,
   onProceed,
+  onSkip,
 }) {
   const [pocketMoney, setPocketMoney] = useState(
     currentStartingPocket > 0 ? String(currentStartingPocket) : ''
@@ -49,9 +50,26 @@ export default function DailyPocketPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-slate-100 flex justify-center overflow-x-hidden p-3 sm:p-4">
+      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200/80 my-auto">
         
+        {/* Top Skip Button */}
+        {onSkip && (
+          <div className="flex justify-end mb-2">
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                onSkip();
+              }}
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition active:scale-95 flex items-center gap-1"
+            >
+              <span>Skip for Now</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* User Profile & Greeting */}
         <div className="text-center mb-6">
           <div className="relative inline-block mb-3">
@@ -73,84 +91,96 @@ export default function DailyPocketPage({
             <span>{greeting.text}, {profile.name || 'Friend'}!</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight mt-1">
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight mt-1">
             Today's Pocket Money
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            How much cash do you have with you today?
+          <p className="text-xs text-slate-400 mt-0.5">
+            How much cash do you have with you today? (Optional)
           </p>
         </div>
 
         {/* Input Card */}
-        <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200/80">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            
-            {/* Big Amount Field */}
-            <div>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-black text-xl">
-                  {profile.currency || 'Rs.'}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  step="any"
-                  autoFocus
-                  required
-                  value={pocketMoney}
-                  onChange={(e) => {
-                    setPocketMoney(e.target.value);
-                    if (error) setError('');
-                  }}
-                  placeholder="0.00"
-                  className="w-full pl-14 pr-4 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-2xl sm:text-3xl font-black text-slate-800 outline-none text-center transition"
-                />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Big Amount Field */}
+          <div>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-black text-xl">
+                {profile.currency || 'Rs.'}
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                autoFocus
+                value={pocketMoney}
+                onChange={(e) => {
+                  setPocketMoney(e.target.value);
+                  if (error) setError('');
+                }}
+                placeholder="0.00"
+                className="w-full pl-14 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-2xl font-black text-slate-800 outline-none text-center transition"
+              />
+            </div>
+            {error && <p className="text-xs text-rose-500 font-semibold text-center mt-1.5">{error}</p>}
+          </div>
+
+          {/* Yesterday Leftover Button */}
+          {yesterdayLeftover > 0 && (
+            <button
+              type="button"
+              onClick={handleUseYesterday}
+              className="w-full py-2.5 px-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-amber-900 flex items-center justify-between text-xs font-bold transition active:scale-98"
+            >
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-amber-600" />
+                <span>Yesterday's Leftover:</span>
               </div>
-              {error && <p className="text-xs text-rose-500 font-semibold text-center mt-1.5">{error}</p>}
-            </div>
+              <span className="bg-amber-500 text-white px-2.5 py-0.5 rounded-lg text-xs font-black shadow-xs">
+                {formatCurrency(yesterdayLeftover, profile.currency)}
+              </span>
+            </button>
+          )}
 
-            {/* Yesterday Leftover Button (User requirement) */}
-            {yesterdayLeftover > 0 && (
+          {/* Quick Add Chips */}
+          <div className="grid grid-cols-4 gap-2">
+            {[500, 1000, 2000, 5000].map((amt) => (
               <button
+                key={amt}
                 type="button"
-                onClick={handleUseYesterday}
-                className="w-full py-2.5 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-amber-900 flex items-center justify-between text-xs font-bold transition active:scale-98"
+                onClick={() => handleQuickAdd(amt)}
+                className="py-2 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-slate-600 font-bold text-xs border border-slate-200 transition active:scale-95"
               >
-                <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-amber-600" />
-                  <span>Yesterday's Leftover:</span>
-                </div>
-                <span className="bg-amber-500 text-white px-2.5 py-0.5 rounded-lg text-xs font-black shadow-xs">
-                  {formatCurrency(yesterdayLeftover, profile.currency)}
-                </span>
+                +{amt}
               </button>
-            )}
+            ))}
+          </div>
 
-            {/* Quick Add Chips */}
-            <div className="grid grid-cols-4 gap-2">
-              {[500, 1000, 2000, 5000].map((amt) => (
-                <button
-                  key={amt}
-                  type="button"
-                  onClick={() => handleQuickAdd(amt)}
-                  className="py-2 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-slate-600 font-bold text-xs border border-slate-200 transition active:scale-95"
-                >
-                  +{amt}
-                </button>
-              ))}
-            </div>
-
-            {/* Continue Button */}
+          {/* Action Buttons: Continue & Skip */}
+          <div className="space-y-2 pt-2">
             <button
               type="submit"
-              className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition active:scale-98"
+              className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition active:scale-98"
             >
-              <span>Open Dashboard</span>
-              <ArrowRight className="w-5 h-5" />
+              <span>Save & Open Dashboard</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
 
-          </form>
-        </div>
+            {onSkip && (
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onSkip();
+                }}
+                className="w-full py-2.5 rounded-xl text-slate-500 hover:text-slate-700 text-xs font-bold transition text-center"
+              >
+                Skip & View Reports / Dashboard directly
+              </button>
+            )}
+          </div>
+
+        </form>
 
       </div>
     </div>

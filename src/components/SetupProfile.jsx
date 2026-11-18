@@ -223,27 +223,31 @@ export default function SetupProfile({ initialProfile = {}, onNext, onCancel }) 
             </p>
           </div>
 
-          {/* Currency Selector */}
+          {/* Currency Selector (Only LKR, USD, and Pound) */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Currency
             </label>
-            <div className="grid grid-cols-4 gap-2">
-              {['Rs.', 'LKR', '$', '€'].map((sym) => (
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { sym: 'Rs.', label: 'LKR (Rs.)' },
+                { sym: '$', label: 'USD ($)' },
+                { sym: '£', label: 'Pound (£)' },
+              ].map((item) => (
                 <button
-                  key={sym}
+                  key={item.sym}
                   type="button"
                   onClick={() => {
-                    setCurrency(sym);
+                    setCurrency(item.sym);
                     sound.playClick();
                   }}
-                  className={`py-2 rounded-xl text-xs font-bold transition border ${
-                    currency === sym
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                  className={`py-2.5 rounded-xl text-xs font-bold transition border ${
+                    currency === item.sym
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs font-black'
                       : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
-                  {sym}
+                  {item.label}
                 </button>
               ))}
             </div>

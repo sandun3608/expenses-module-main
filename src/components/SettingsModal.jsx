@@ -191,24 +191,28 @@ export default function SettingsModal({
             />
           </div>
 
-          {/* Currency */}
+          {/* Currency (Only LKR, USD, and Pound) */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
               Currency
             </label>
-            <div className="grid grid-cols-4 gap-2">
-              {['Rs.', 'LKR', '$', '€'].map((sym) => (
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { sym: 'Rs.', label: 'LKR (Rs.)' },
+                { sym: '$', label: 'USD ($)' },
+                { sym: '£', label: 'Pound (£)' },
+              ].map((item) => (
                 <button
-                  key={sym}
+                  key={item.sym}
                   type="button"
-                  onClick={() => setCurrency(sym)}
+                  onClick={() => setCurrency(item.sym)}
                   className={`py-2 rounded-xl text-xs font-bold border transition ${
-                    currency === sym
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    currency === item.sym
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-black'
                       : 'bg-slate-50 text-slate-600 border-slate-200'
                   }`}
                 >
-                  {sym}
+                  {item.label}
                 </button>
               ))}
             </div>
