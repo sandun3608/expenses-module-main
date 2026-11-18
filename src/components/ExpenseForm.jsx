@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { PlusCircle, DollarSign, Tag, CreditCard, Wallet, Sparkles, AlertCircle, ChevronDown, Check } from 'lucide-react';
+import { PlusCircle, Wallet, CreditCard, Sparkles, AlertCircle } from 'lucide-react';
 import { CATEGORIES, formatCurrency } from '../utils/storage';
 import { sound } from '../utils/sound';
 
@@ -22,7 +22,6 @@ export default function ExpenseForm({
   const reasonInputRef = useRef(null);
   const suggestionBoxRef = useRef(null);
 
-  // Handle reason typing and filter suggestions
   const handleReasonChange = (e) => {
     const val = e.target.value;
     setReason(val);
@@ -42,20 +41,6 @@ export default function ExpenseForm({
     setReason(suggested);
     setShowSuggestions(false);
     sound.playClick();
-    
-    // Auto-guess category based on keywords
-    const lower = suggested.toLowerCase();
-    if (lower.includes('tea') || lower.includes('food') || lower.includes('lunch') || lower.includes('dinner') || lower.includes('coffee') || lower.includes('snack')) {
-      setCategory('food');
-    } else if (lower.includes('bus') || lower.includes('train') || lower.includes('ride') || lower.includes('uber') || lower.includes('pickme') || lower.includes('fuel') || lower.includes('petrol')) {
-      setCategory('transport');
-    } else if (lower.includes('grocery') || lower.includes('market') || lower.includes('supermarket') || lower.includes('keells') || lower.includes('cargills')) {
-      setCategory('grocery');
-    } else if (lower.includes('bill') || lower.includes('electricity') || lower.includes('water') || lower.includes('reload') || lower.includes('wifi')) {
-      setCategory('bills');
-    } else if (lower.includes('pharmacy') || lower.includes('medicine') || lower.includes('doctor')) {
-      setCategory('health');
-    }
   };
 
   // Close suggestions if clicked outside
@@ -98,36 +83,27 @@ export default function ExpenseForm({
     setShowSuggestions(false);
   };
 
-  const isCashLow = paymentMethod === 'cash' && parseFloat(amount) > todayPocketRemaining;
-  const isBankLow = paymentMethod === 'card' && selectedBank && parseFloat(amount) > selectedBank.balance;
-
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-blue-500/5 border border-blue-100">
+    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
       
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-            <PlusCircle className="w-5 h-5" />
-          </div>
-          <h2 className="font-extrabold text-slate-800 text-lg">
-            Add Daily Expense
-          </h2>
-        </div>
-        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
-          Quick Entry
+        <h2 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
+          <span>Add Expense</span>
+        </h2>
+        <span className="text-xs font-semibold text-slate-400">
+          Fast Record
         </span>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         
-        {/* Row 1: Amount & Payment Method */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        {/* Row 1: Amount & Payment Source */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           
-          {/* Amount Input */}
+          {/* Amount Field */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-              Price / Amount ({currency})
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Amount ({currency})
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-sm">
@@ -141,15 +117,15 @@ export default function ExpenseForm({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full pl-12 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-base font-bold text-slate-800 outline-none transition"
+                className="w-full pl-12 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-base font-bold text-slate-800 outline-none transition"
               />
             </div>
           </div>
 
-          {/* Payment Method Selector */}
+          {/* Payment Source Toggle */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-              Deduct From (Payment Source)
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Payment Source
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -158,13 +134,13 @@ export default function ExpenseForm({
                   setPaymentMethod('cash');
                   sound.playClick();
                 }}
-                className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition border ${
+                className={`py-3 px-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition border ${
                   paymentMethod === 'cash'
-                    ? 'bg-sky-500 text-white border-sky-500 shadow-xs'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                <Wallet className="w-3.5 h-3.5" />
+                <Wallet className="w-4 h-4" />
                 <span>Pocket Cash</span>
               </button>
 
@@ -174,13 +150,13 @@ export default function ExpenseForm({
                   setPaymentMethod('card');
                   sound.playClick();
                 }}
-                className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition border ${
+                className={`py-3 px-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition border ${
                   paymentMethod === 'card'
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                <CreditCard className="w-3.5 h-3.5" />
+                <CreditCard className="w-4 h-4" />
                 <span>Bank / Card</span>
               </button>
             </div>
@@ -188,13 +164,13 @@ export default function ExpenseForm({
 
         </div>
 
-        {/* If Card Payment: Select which of the 3 Banks */}
+        {/* If Card Payment: Select Bank */}
         {paymentMethod === 'card' && (
-          <div className="p-3 bg-blue-50/60 rounded-2xl border border-blue-200/60 animate-in fade-in">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-blue-800 mb-1">
-              Select Bank to Deduct From:
+          <div className="p-3 bg-blue-50/60 rounded-2xl border border-blue-100">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-blue-900 mb-1.5">
+              Deduct from which Bank?
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               {banks.map((b) => (
                 <button
                   key={b.id}
@@ -203,54 +179,52 @@ export default function ExpenseForm({
                     setSelectedBankId(b.id);
                     sound.playClick();
                   }}
-                  className={`p-2 rounded-xl text-left border transition ${
+                  className={`py-2 px-3 rounded-xl text-left border text-xs font-bold transition whitespace-nowrap ${
                     selectedBankId === b.id
-                      ? 'bg-white border-blue-500 shadow-xs ring-2 ring-blue-500/20'
-                      : 'bg-white/70 border-slate-200 hover:bg-white'
+                      ? 'bg-white border-blue-600 text-blue-700 shadow-xs ring-2 ring-blue-500/20'
+                      : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'
                   }`}
                 >
-                  <p className="text-xs font-bold text-slate-800 truncate">{b.name}</p>
-                  <p className="text-[10px] text-blue-600 font-semibold">
+                  <span>{b.name || 'Bank'}</span>
+                  <span className="block text-[10px] text-slate-400 font-semibold">
                     {formatCurrency(b.balance, currency)}
-                  </p>
+                  </span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Reason / Description with Autocomplete suggestions */}
+        {/* Reason / Description with live autocomplete */}
         <div className="relative">
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-            Reason / Description (with Smart Suggestion)
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            Reason / Description
           </label>
-          <div className="relative">
-            <input
-              ref={reasonInputRef}
-              type="text"
-              required
-              value={reason}
-              onChange={handleReasonChange}
-              onFocus={() => {
-                if (frequentReasons.length > 0) {
-                  setSuggestions(frequentReasons.slice(0, 5));
-                  setShowSuggestions(true);
-                }
-              }}
-              placeholder="Enter expense reason..."
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-sm font-medium text-slate-800 outline-none transition"
-            />
-          </div>
+          <input
+            ref={reasonInputRef}
+            type="text"
+            required
+            value={reason}
+            onChange={handleReasonChange}
+            onFocus={() => {
+              if (frequentReasons.length > 0) {
+                setSuggestions(frequentReasons.slice(0, 5));
+                setShowSuggestions(true);
+              }
+            }}
+            placeholder="What was this expense for?"
+            className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-sm font-semibold text-slate-800 outline-none transition"
+          />
 
           {/* Autocomplete Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
             <div
               ref={suggestionBoxRef}
-              className="absolute left-0 right-0 top-full mt-1 bg-white rounded-2xl shadow-xl border border-blue-100 z-20 py-2 overflow-hidden animate-in fade-in"
+              className="absolute left-0 right-0 top-full mt-1 bg-white rounded-2xl shadow-xl border border-slate-100 z-20 py-2 overflow-hidden animate-in fade-in"
             >
               <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-amber-500" />
-                <span>Suggested Past Reasons</span>
+                <span>Your Past Reasons</span>
               </div>
               {suggestions.map((item, idx) => (
                 <button
@@ -269,8 +243,8 @@ export default function ExpenseForm({
 
         {/* Category Selector Chips */}
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-            Expense Category
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            Category
           </label>
           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {CATEGORIES.map((cat) => (
@@ -281,7 +255,7 @@ export default function ExpenseForm({
                   setCategory(cat.id);
                   sound.playClick();
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 border ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
                   category === cat.id
                     ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -293,28 +267,13 @@ export default function ExpenseForm({
           </div>
         </div>
 
-        {/* Warnings if balance is tight */}
-        {isCashLow && (
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 text-amber-800 text-xs border border-amber-200">
-            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
-            <span>Amount exceeds today's remaining pocket money ({formatCurrency(todayPocketRemaining, currency)}).</span>
-          </div>
-        )}
-
-        {isBankLow && (
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 text-rose-800 text-xs border border-rose-200">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-            <span>Amount exceeds selected bank balance ({formatCurrency(selectedBank.balance, currency)}).</span>
-          </div>
-        )}
-
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-98 transition"
+          className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-98 transition"
         >
           <PlusCircle className="w-4 h-4" />
-          <span>Add Expense</span>
+          <span>Save Expense</span>
         </button>
 
       </form>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { X, User, Camera, Check, Volume2, VolumeX, Download, Upload, Trash2, Database, Sparkles } from 'lucide-react';
-import { DEFAULT_AVATARS, storage, getTodayDateKey, getYesterdayDateKey } from '../utils/storage';
+import React, { useState, useRef } from 'react';
+import { X, User, Camera, Image as ImageIcon, Volume2, VolumeX, Download, Upload, Trash2 } from 'lucide-react';
+import { storage, getTodayDateKey } from '../utils/storage';
 import { sound } from '../utils/sound';
 
 export default function SettingsModal({
@@ -13,12 +13,15 @@ export default function SettingsModal({
   if (!isOpen) return null;
 
   const [name, setName] = useState(profile.name || '');
-  const [avatar, setAvatar] = useState(profile.avatar || DEFAULT_AVATARS[0]);
+  const [avatar, setAvatar] = useState(profile.avatar || '');
   const [currency, setCurrency] = useState(profile.currency || 'Rs.');
   const [soundEnabled, setSoundEnabled] = useState(sound.enabled);
   const [toastMsg, setToastMsg] = useState('');
 
-  const handleCustomUpload = (e) => {
+  const galleryRef = useRef(null);
+  const cameraRef = useRef(null);
+
+  const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -38,16 +41,16 @@ export default function SettingsModal({
     const updated = {
       ...profile,
       name: name.trim(),
-      avatar,
+      avatar: avatar || '',
       currency,
     };
     onUpdateProfile(updated);
     sound.playSuccess();
-    setToastMsg('Profile updated successfully!');
+    setToastMsg('Profile saved successfully!');
     setTimeout(() => {
       setToastMsg('');
       onClose();
-    }, 900);
+    }, 800);
   };
 
   const handleToggleSound = () => {
@@ -82,7 +85,7 @@ export default function SettingsModal({
             onReloadAllData();
             onClose();
           } else {
-            alert('Invalid backup file format');
+            alert('Invalid backup file');
           }
         }
       };
@@ -91,29 +94,21 @@ export default function SettingsModal({
   };
 
   const handleReset = () => {
-    if (window.confirm('WARNING: Are you sure you want to delete ALL data and start fresh from the initial setup? This cannot be undone.')) {
+    if (window.confirm('Reset all data and start fresh? This cannot be undone.')) {
       storage.clearAllData();
       window.location.reload();
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-blue-100 p-5 sm:p-7">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
+      <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-              <User className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-slate-800 text-lg">
-                Edit Profile & Settings
-              </h3>
-              <p className="text-xs text-slate-500">Update your details and manage data</p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+          <h3 className="font-black text-slate-800 text-lg">
+            Profile & Settings
+          </h3>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition"
@@ -123,59 +118,64 @@ export default function SettingsModal({
         </div>
 
         {toastMsg && (
-          <div className="mt-3 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold text-center">
+          <div className="mt-3 p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold text-center">
             {toastMsg}
           </div>
         )}
 
-        {/* Profile Edit Form */}
-        <form onSubmit={handleSaveProfile} className="mt-5 space-y-5">
+        {/* Profile Form */}
+        <form onSubmit={handleSaveProfile} className="mt-4 space-y-4">
           
-          {/* Avatar selector */}
+          {/* Avatar Photo (Gallery & Camera ONLY) */}
           <div className="text-center">
             <div className="relative inline-block mb-3">
-              <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-blue-600 to-sky-400 shadow-md">
-                <img
-                  src={avatar}
-                  alt={name}
-                  className="w-full h-full rounded-full object-cover bg-white"
-                />
+              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 flex items-center justify-center">
+                {avatar ? (
+                  <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-8 h-8 text-slate-400" />
+                )}
               </div>
-              <label
-                htmlFor="settings-avatar-upload"
-                className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md cursor-pointer hover:bg-blue-700"
+              {avatar && (
+                <button
+                  type="button"
+                  onClick={() => setAvatar('')}
+                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-sm"
+                  title="Remove"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => galleryRef.current?.click()}
+                className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold flex items-center gap-1.5 border border-blue-200"
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Gallery</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => cameraRef.current?.click()}
+                className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 border border-slate-200"
               >
                 <Camera className="w-3.5 h-3.5" />
-              </label>
-              <input
-                id="settings-avatar-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleCustomUpload}
-                className="hidden"
-              />
+                <span>Camera</span>
+              </button>
             </div>
 
-            <div className="flex items-center justify-center gap-2 flex-wrap">
-              {DEFAULT_AVATARS.map((url, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setAvatar(url)}
-                  className={`w-9 h-9 rounded-full p-0.5 transition ${
-                    avatar === url ? 'ring-2 ring-blue-600 scale-105' : 'opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <img src={url} alt={`Avatar ${idx}`} className="w-full h-full rounded-full object-cover" />
-                </button>
-              ))}
-            </div>
+            <input ref={galleryRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input ref={cameraRef} type="file" accept="image/*" capture="user" onChange={handleFileChange} className="hidden" />
           </div>
 
-          {/* Name input */}
+          {/* Name */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-              Display Name
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Your Name
             </label>
             <input
               type="text"
@@ -186,10 +186,10 @@ export default function SettingsModal({
             />
           </div>
 
-          {/* Currency input */}
+          {/* Currency */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-              Currency Symbol
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Currency
             </label>
             <div className="grid grid-cols-4 gap-2">
               {['Rs.', 'LKR', '$', '€'].map((sym) => (
@@ -199,7 +199,7 @@ export default function SettingsModal({
                   onClick={() => setCurrency(sym)}
                   className={`py-2 rounded-xl text-xs font-bold border transition ${
                     currency === sym
-                      ? 'bg-blue-50 text-blue-700 border-blue-400'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                       : 'bg-slate-50 text-slate-600 border-slate-200'
                   }`}
                 >
@@ -211,31 +211,23 @@ export default function SettingsModal({
 
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 transition active:scale-98"
+            className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md transition active:scale-98"
           >
-            Save Profile Changes
+            Save Profile
           </button>
         </form>
 
-        {/* Extra Settings Options */}
-        <div className="mt-6 pt-5 border-t border-slate-100 space-y-3">
-          
+        {/* Options */}
+        <div className="mt-5 pt-4 border-t border-slate-100 space-y-2.5">
           {/* Sound Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/60">
-            <div className="flex items-center gap-2.5">
-              {soundEnabled ? (
-                <Volume2 className="w-4 h-4 text-blue-600" />
-              ) : (
-                <VolumeX className="w-4 h-4 text-slate-400" />
-              )}
-              <div>
-                <p className="text-xs font-bold text-slate-700">Audio Feedback</p>
-                <p className="text-[10px] text-slate-400">Pleasant clicks & chimes</p>
-              </div>
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center gap-2">
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-blue-600" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+              <span className="text-xs font-bold text-slate-700">Sound Effects</span>
             </div>
             <button
               onClick={handleToggleSound}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+              className={`px-3 py-1 rounded-lg text-xs font-bold ${
                 soundEnabled ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'
               }`}
             >
@@ -243,32 +235,31 @@ export default function SettingsModal({
             </button>
           </div>
 
-          {/* Backup / Export / Import */}
+          {/* Backup & Restore */}
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={handleExport}
-              className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition"
+              className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Export Backup</span>
+              <span>Export</span>
             </button>
 
-            <label className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition text-center">
+            <label className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer text-center">
               <Upload className="w-3.5 h-3.5" />
-              <span>Import Backup</span>
+              <span>Import</span>
               <input type="file" accept=".json" onChange={handleImport} className="hidden" />
             </label>
           </div>
 
-          {/* Reset App */}
+          {/* Reset */}
           <button
             onClick={handleReset}
-            className="w-full p-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold flex items-center justify-center gap-1.5 transition"
+            className="w-full py-2 rounded-xl text-rose-500 hover:bg-rose-50 text-xs font-bold flex items-center justify-center gap-1.5 transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>Reset App & Start Over</span>
+            <span>Reset All App Data</span>
           </button>
-
         </div>
 
       </div>

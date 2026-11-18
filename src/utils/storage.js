@@ -2,13 +2,13 @@
 // Completely clean with ZERO fake/dummy data
 
 const STORAGE_KEYS = {
-  PROFILE: 'sp_profile_v2',
-  BANKS: 'sp_banks_v2',
-  DAILY_SESSIONS: 'sp_daily_sessions_v2',
-  EXPENSES: 'sp_expenses_v2',
-  BANK_TX: 'sp_bank_tx_v2',
-  REASONS: 'sp_reasons_v2',
-  SAVINGS: 'sp_savings_v2',
+  PROFILE: 'sp_profile_v3',
+  BANKS: 'sp_banks_v3',
+  DAILY_SESSIONS: 'sp_daily_sessions_v3',
+  EXPENSES: 'sp_expenses_v3',
+  BANK_TX: 'sp_bank_tx_v3',
+  REASONS: 'sp_reasons_v3',
+  SAVINGS: 'sp_savings_v3',
 };
 
 // Clean modern SVG avatar options (User initials & clean minimal icons, no random fake model photos)
@@ -72,14 +72,14 @@ export const storage = {
         ? JSON.parse(data)
         : {
             name: '',
-            avatar: DEFAULT_AVATARS[0],
+            avatar: '',
             currency: 'Rs.',
             isSetupCompleted: false,
           };
     } catch {
       return {
         name: '',
-        avatar: DEFAULT_AVATARS[0],
+        avatar: '',
         currency: 'Rs.',
         isSetupCompleted: false,
       };
