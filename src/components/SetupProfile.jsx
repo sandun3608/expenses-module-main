@@ -168,7 +168,7 @@ export default function SetupProfile({ initialProfile = {}, onNext, onCancel }) 
                 setName(e.target.value);
                 if (error) setError('');
               }}
-              placeholder="e.g. Kasun Perera"
+              placeholder="Enter your name"
               className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-slate-800 text-sm font-semibold outline-none transition"
               autoFocus
             />

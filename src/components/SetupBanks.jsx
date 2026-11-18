@@ -105,7 +105,7 @@ export default function SetupBanks({ currency = 'Rs.', initialBanks, onBack, onC
                   required
                   value={bank.name}
                   onChange={(e) => handleBankChange(idx, 'name', e.target.value)}
-                  placeholder="Bank Name (e.g. Commercial, BOC)"
+                  placeholder="Enter Bank Name"
                   className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-blue-500 transition"
                 />
 

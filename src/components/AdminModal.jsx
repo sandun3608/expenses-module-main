@@ -29,7 +29,7 @@ export default function AdminModal({
       setError('');
     } else {
       sound.playClick();
-      setError('Incorrect admin password. (Default is admin123)');
+      setError('Incorrect admin password. Please try again.');
     }
   };
 
@@ -105,7 +105,7 @@ export default function AdminModal({
                 <Lock className="w-6 h-6" />
               </div>
               <p className="text-sm font-bold text-slate-700">Enter Admin Password</p>
-              <p className="text-xs text-slate-400 mt-0.5">Default password is <code className="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-bold">admin123</code></p>
+              <p className="text-xs text-slate-400 mt-0.5">Enter security password to access system controls</p>
             </div>
 
             <div>
