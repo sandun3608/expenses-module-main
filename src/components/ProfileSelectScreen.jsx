@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PiggyBank, Search, Plus, Shield, User, Lock, ArrowRight, UserPlus, Sparkles } from 'lucide-react';
+import { PiggyBank, Search, Plus, Shield, User, Lock, ArrowRight, UserPlus, Sparkles, Users } from 'lucide-react';
 import { sound } from '../utils/sound';
 
 export default function ProfileSelectScreen({
@@ -15,15 +15,15 @@ export default function ProfileSelectScreen({
   );
 
   return (
-    <div className="h-screen max-h-screen bg-slate-100 flex justify-center items-center p-2 sm:p-4 overflow-hidden">
+    <div className="min-h-screen bg-slate-100 flex justify-center py-4 px-3 sm:py-8 sm:px-4 overflow-x-hidden">
       
-      {/* Main Locked Mobile App Frame (No entire page vertical bouncing) */}
-      <div className="w-full max-w-md h-full max-h-[96vh] sm:max-h-[660px] bg-white rounded-[32px] shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden">
+      {/* Main Clean White Mobile Container (Fully scrollable on any phone!) */}
+      <div className="w-full max-w-md bg-white rounded-[32px] shadow-xl border border-slate-200/80 flex flex-col p-4 sm:p-6 my-auto">
         
-        {/* 1. TOP MODERN BLUE DESIGN HEADER CARD (Centered App Name in Pure White) */}
-        <div className="mx-3.5 mt-3.5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white shadow-lg shadow-blue-500/20 relative shrink-0 text-center">
+        {/* 1. TOP MODERN BLUE DESIGN HEADER (Centered White App Name & Circular Admin Button) */}
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white shadow-lg shadow-blue-500/20 relative text-center mb-4">
           
-          {/* Circular Admin Button on Top Right (User request) */}
+          {/* Circular Admin Button on Top Right */}
           <button
             type="button"
             onClick={() => {
@@ -50,46 +50,49 @@ export default function ProfileSelectScreen({
           </p>
         </div>
 
-        {/* 2. MIDDLE CONTENT HEADER: Subtitle & Search (Fixed) */}
-        <div className="px-4 pt-3 pb-1 shrink-0">
-          <div className="flex items-center justify-between mb-1.5 px-0.5">
+        {/* 2. HEADER FOR ACCOUNTS */}
+        <div className="mb-3 px-1">
+          <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>Select Profile</span>
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>Registered Accounts</span>
             </span>
-            <span className="text-[11px] font-bold text-slate-400">
+            <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
               {users.length} {users.length === 1 ? 'Account' : 'Accounts'}
             </span>
           </div>
-
-          {/* Search Bar (Only shown if more than 1 user) */}
-          {users.length > 1 && (
-            <div className="relative my-1.5">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search profiles..."
-                className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:bg-white focus:border-blue-500 transition"
-              />
-            </div>
-          )}
+          <p className="text-[11px] text-slate-400">
+            Select your profile and enter your 4-digit PIN to continue
+          </p>
         </div>
 
-        {/* 3. SCROLLABLE PROFILES AREA ONLY (Only profiles move up and down!) */}
-        <div className="flex-1 overflow-y-auto px-4 py-1.5 space-y-2.5">
+        {/* Search Bar (if more than 1 user) */}
+        {users.length > 1 && (
+          <div className="relative mb-3">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search profiles..."
+              className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+            />
+          </div>
+        )}
+
+        {/* 3. ALL REGISTERED ACCOUNTS LIST ("first page eke acount hadapu okkoma pennna ona") */}
+        <div className="space-y-2.5 mb-4">
           {users.length === 0 ? (
             /* Clean Empty State */
-            <div className="h-full flex flex-col items-center justify-center py-6 px-4 bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5">
+            <div className="py-10 px-4 bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-center my-2">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5">
                 <PiggyBank className="w-7 h-7" />
               </div>
-              <h3 className="font-black text-slate-800 text-sm sm:text-base">
-                No Profiles Found
+              <h3 className="font-black text-slate-800 text-base">
+                No Accounts Created Yet
               </h3>
-              <p className="text-[11px] text-slate-500 mt-1 max-w-xs leading-relaxed">
-                Create your personal account to manage your bank balances, daily cash, and expenses.
+              <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
+                Welcome to Exchange Manager! Create your first account to manage your bank balances, daily pocket money, and expenses.
               </p>
               <button
                 type="button"
@@ -104,66 +107,65 @@ export default function ProfileSelectScreen({
               </button>
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-xs font-bold">
+            <div className="text-center py-8 text-slate-400 text-xs font-bold bg-slate-50 rounded-2xl">
               No profiles matching "{searchQuery}"
             </div>
           ) : (
-            <div className="space-y-2">
-              {filteredUsers.map((u) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => {
-                    sound.playClick();
-                    onSelectUser(u);
-                  }}
-                  className="w-full p-3 bg-slate-50 hover:bg-blue-50/60 rounded-2xl border border-slate-200/90 hover:border-blue-300 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between group active:scale-[0.99] text-left"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    {/* User Avatar */}
-                    <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-blue-500/20 bg-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-                      {u.avatar ? (
-                        <img
-                          src={u.avatar}
-                          alt={u.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-5 h-5 text-slate-400" />
-                      )}
-                    </div>
-
-                    <div className="min-w-0">
-                      <h4 className="font-extrabold text-slate-800 text-sm group-hover:text-blue-600 transition-colors truncate">
-                        {u.name}
-                      </h4>
-                      <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-slate-400 mt-0.5">
-                        <Lock className="w-3 h-3 text-emerald-500" />
-                        <span>4-Digit PIN Protected</span>
-                      </div>
-                    </div>
+            /* SHOW ALL ACCOUNTS CLEARLY & ELEGANTLY */
+            filteredUsers.map((u) => (
+              <button
+                key={u.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onSelectUser(u);
+                }}
+                className="w-full p-3.5 bg-slate-50 hover:bg-blue-50/70 rounded-2xl border border-slate-200/90 hover:border-blue-300 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between group active:scale-[0.99] text-left"
+              >
+                <div className="flex items-center gap-3.5 min-w-0">
+                  {/* User Avatar with subtle ring */}
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500/25 bg-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                    {u.avatar ? (
+                      <img
+                        src={u.avatar}
+                        alt={u.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-6 h-6 text-slate-400" />
+                    )}
                   </div>
 
-                  {/* Right Circle Arrow Button */}
-                  <div className="w-8 h-8 rounded-full bg-white group-hover:bg-blue-600 text-slate-400 group-hover:text-white border border-slate-200/80 group-hover:border-blue-600 flex items-center justify-center transition-all shrink-0 ml-2 shadow-2xs">
-                    <ArrowRight className="w-4 h-4" />
+                  <div className="min-w-0">
+                    <h4 className="font-extrabold text-slate-800 text-sm sm:text-base group-hover:text-blue-600 transition-colors truncate">
+                      {u.name}
+                    </h4>
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 mt-0.5">
+                      <Lock className="w-3 h-3 text-emerald-500" />
+                      <span>4-Digit PIN Protected</span>
+                    </div>
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
+
+                {/* Right Circle Arrow Button */}
+                <div className="w-8 h-8 rounded-full bg-white group-hover:bg-blue-600 text-slate-400 group-hover:text-white border border-slate-200/80 group-hover:border-blue-600 flex items-center justify-center transition-all shrink-0 ml-2 shadow-2xs">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </button>
+            ))
           )}
         </div>
 
-        {/* 4. PINNED BOTTOM ACTION: Create New Profile (Fixed at bottom) */}
+        {/* 4. CREATE NEW PROFILE BUTTON */}
         {users.length > 0 && (
-          <div className="p-3.5 bg-white border-t border-slate-100 shrink-0">
+          <div className="pt-3 border-t border-slate-100 mt-auto">
             <button
               type="button"
               onClick={() => {
                 sound.playClick();
                 onCreateNew();
               }}
-              className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition active:scale-[0.98]"
+              className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition active:scale-[0.98]"
             >
               <UserPlus className="w-4 h-4" />
               <span>+ Create New Profile</span>
