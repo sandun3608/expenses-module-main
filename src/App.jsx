@@ -50,10 +50,36 @@ export default function App() {
     storage.setCurrentUserId(currentUserId);
   }, [currentUserId]);
 
+  // Initial and periodic Cloud Sync across all phones / devices
+  useEffect(() => {
+    // 1. Initial Cloud Sync on mount
+    storage.syncFromServer().then((remoteUsers) => {
+      if (remoteUsers && remoteUsers.length > 0) {
+        setUsers(remoteUsers);
+      }
+    });
+
+    // 2. Auto-sync every 4 seconds when in profile select mode so accounts from other phones appear live!
+    const interval = setInterval(() => {
+      storage.syncFromServer().then((remoteUsers) => {
+        if (remoteUsers) {
+          setUsers((prev) => {
+            const prevStr = JSON.stringify(prev);
+            const nextStr = JSON.stringify(remoteUsers);
+            return prevStr !== nextStr ? remoteUsers : prev;
+          });
+        }
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Helper to reload users from storage
   const reloadUsersFromStorage = () => {
-    const fresh = storage.getUsers();
-    setUsers(fresh);
+    storage.syncFromServer().then((fresh) => {
+      setUsers(fresh);
+    });
   };
 
   // Helper to mutate active user fields in state and storage
@@ -74,6 +100,9 @@ export default function App() {
     sound.playClick();
     setCurrentUserId(null);
     storage.setCurrentUserId(null);
+    storage.syncFromServer().then((fresh) => {
+      if (fresh) setUsers(fresh);
+    });
   };
 
   // Select profile from list -> Prompt PIN

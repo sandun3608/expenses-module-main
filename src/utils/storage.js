@@ -1,5 +1,5 @@
-// LocalStorage manager for Exchange Manager app
-// Multi-User, 4-digit PIN authentication, Admin portal, and reliable persistence
+// LocalStorage & Cloud Database Manager for Exchange Manager app
+// Multi-User, Multi-Device Cloud Sync, 4-digit PIN authentication, Admin portal, and reliable persistence
 
 const STORAGE_KEYS = {
   USERS: 'em_users_v4',
@@ -33,14 +33,80 @@ export const getTodayDateKey = () => {
 
 export const formatCurrency = (amount, symbol = 'Rs.') => {
   const num = Number(amount) || 0;
-  return `${symbol} ${num.toLocaleString('en-LK', {
+  return `${symbol} ${num.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 };
 
 export const storage = {
-  // --- USERS MANAGEMENT ---
+  // --- CLOUD SYNC METHODS (Multi-Device Support) ---
+  syncFromServer: async () => {
+    try {
+      const res = await fetch('/api/data');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.users)) {
+          const localUsers = storage.getUsers();
+          const userMap = new Map();
+
+          // Merge local and cloud server accounts
+          localUsers.forEach((u) => userMap.set(u.id, u));
+          data.users.forEach((u) => userMap.set(u.id, u));
+
+          const merged = Array.from(userMap.values());
+          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(merged));
+
+          if (data.adminPassword) {
+            localStorage.setItem(STORAGE_KEYS.ADMIN_PASSWORD, data.adminPassword);
+          }
+
+          // If local had accounts not on server, push merged to server
+          if (merged.length > data.users.length) {
+            storage.syncAllUsersToServer(merged);
+          }
+
+          return merged;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync from cloud server:', err);
+    }
+    return storage.getUsers();
+  },
+
+  syncUserToServer: (user) => {
+    if (!user) return;
+    try {
+      fetch('/api/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user }),
+      }).catch((e) => console.warn('Sync user failed:', e));
+    } catch {}
+  },
+
+  syncAllUsersToServer: (users) => {
+    try {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users }),
+      }).catch((e) => console.warn('Sync all users failed:', e));
+    } catch {}
+  },
+
+  deleteUserFromServer: (id) => {
+    try {
+      fetch('/api/user/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      }).catch((e) => console.warn('Delete user on server failed:', e));
+    } catch {}
+  },
+
+  // --- LOCAL USERS MANAGEMENT ---
   getUsers: () => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.USERS);
@@ -52,6 +118,7 @@ export const storage = {
 
   setUsers: (users) => {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    storage.syncAllUsersToServer(users);
   },
 
   getUserById: (id) => {
@@ -80,19 +147,31 @@ export const storage = {
     const updated = [...users, newUser];
     storage.setUsers(updated);
     storage.setCurrentUserId(newUser.id);
+    storage.syncUserToServer(newUser);
     return newUser;
   },
 
   updateUser: (id, updatedFields) => {
     const users = storage.getUsers();
-    const updated = users.map((u) => (u.id === id ? { ...u, ...updatedFields } : u));
+    let updatedUser = null;
+    const updated = users.map((u) => {
+      if (u.id === id) {
+        updatedUser = { ...u, ...updatedFields };
+        return updatedUser;
+      }
+      return u;
+    });
     storage.setUsers(updated);
+    if (updatedUser) {
+      storage.syncUserToServer(updatedUser);
+    }
   },
 
   deleteUser: (id) => {
     const users = storage.getUsers();
     const filtered = users.filter((u) => u.id !== id);
     storage.setUsers(filtered);
+    storage.deleteUserFromServer(id);
     if (storage.getCurrentUserId() === id) {
       storage.setCurrentUserId(null);
     }
@@ -126,6 +205,13 @@ export const storage = {
 
   setAdminPassword: (pw) => {
     localStorage.setItem(STORAGE_KEYS.ADMIN_PASSWORD, pw);
+    try {
+      fetch('/api/admin/pw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw }),
+      }).catch(() => {});
+    } catch {}
   },
 
   verifyAdminPassword: (pw) => {
