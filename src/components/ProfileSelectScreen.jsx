@@ -15,84 +15,81 @@ export default function ProfileSelectScreen({
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 flex justify-center py-4 px-3 sm:py-8 sm:px-4 overflow-x-hidden">
+    <div className="fixed inset-0 h-[100dvh] w-full bg-white flex justify-center items-center overflow-hidden">
       
-      {/* Main Clean White Mobile Container (Fully scrollable on any phone!) */}
-      <div className="w-full max-w-md bg-white rounded-[32px] shadow-xl border border-slate-200/80 flex flex-col p-4 sm:p-6 my-auto">
+      {/* 100% PURE WHITE & FIXED MOBILE FRAME (Zero whole-page bouncing) */}
+      <div className="w-full max-w-md h-full flex flex-col bg-white overflow-hidden">
         
-        {/* 1. TOP MODERN BLUE DESIGN HEADER (Centered White App Name & Circular Admin Button) */}
-        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white shadow-lg shadow-blue-500/20 relative text-center mb-4">
-          
-          {/* Circular Admin Button on Top Right */}
-          <button
-            type="button"
-            onClick={() => {
-              sound.playClick();
-              onOpenAdmin();
-            }}
-            className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md transition active:scale-95 absolute top-3.5 right-3.5 shadow-2xs border border-white/20"
-            title="Open Admin Portal"
-          >
-            <Shield className="w-4 h-4 text-white" />
-          </button>
+        {/* 1. FIXED TOP HEADER (Modern Blue Card with Centered White Title & Circular Admin Icon) */}
+        <div className="px-4 pt-3 pb-1 shrink-0 bg-white">
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white shadow-lg shadow-blue-500/20 relative text-center">
+            
+            {/* Circular Admin Button on Top Right */}
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                onOpenAdmin();
+              }}
+              className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md transition active:scale-95 absolute top-3.5 right-3.5 shadow-2xs border border-white/20"
+              title="Open Admin Portal"
+            >
+              <Shield className="w-4 h-4 text-white" />
+            </button>
 
-          {/* Centered Piggy Bank Logo Badge */}
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-white text-blue-600 flex items-center justify-center shadow-md mb-2">
-            <PiggyBank className="w-6 h-6 stroke-[2.2]" />
+            {/* Centered Piggy Bank Logo Badge */}
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-white text-blue-600 flex items-center justify-center shadow-md mb-2">
+              <PiggyBank className="w-6 h-6 stroke-[2.2]" />
+            </div>
+
+            {/* Centered App Name in Pure White */}
+            <h1 className="text-xl font-black text-white tracking-tight leading-tight">
+              Exchange Manager
+            </h1>
+            <p className="text-xs font-bold text-blue-100/90 mt-0.5">
+              Daily Finance & Expenses
+            </p>
           </div>
 
-          {/* Centered App Name in Pure White */}
-          <h1 className="text-xl font-black text-white tracking-tight leading-tight">
-            Exchange Manager
-          </h1>
-          <p className="text-xs font-bold text-blue-100/90 mt-0.5">
-            Daily Finance & Expenses
-          </p>
-        </div>
-
-        {/* 2. HEADER FOR ACCOUNTS */}
-        <div className="mb-3 px-1">
-          <div className="flex items-center justify-between mb-1">
+          {/* Subtitle & Account Counter */}
+          <div className="flex items-center justify-between mt-3 px-1">
             <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-blue-600" />
-              <span>Registered Accounts</span>
+              <span>Select Profile</span>
             </span>
             <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
               {users.length} {users.length === 1 ? 'Account' : 'Accounts'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-400">
-            Select your profile and enter your 4-digit PIN to continue
-          </p>
+
+          {/* Search Bar (if more than 1 user) */}
+          {users.length > 1 && (
+            <div className="relative mt-2">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search profiles..."
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+              />
+            </div>
+          )}
         </div>
 
-        {/* Search Bar (if more than 1 user) */}
-        {users.length > 1 && (
-          <div className="relative mb-3">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search profiles..."
-              className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-            />
-          </div>
-        )}
-
-        {/* 3. ALL REGISTERED ACCOUNTS LIST ("first page eke acount hadapu okkoma pennna ona") */}
-        <div className="space-y-2.5 mb-4">
+        {/* 2. SCROLLABLE USERS SECTION ONLY (Users scroll smoothly while page stays fixed!) */}
+        <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2.5 overscroll-contain">
           {users.length === 0 ? (
             /* Clean Empty State */
-            <div className="py-10 px-4 bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-center my-2">
+            <div className="h-full flex flex-col items-center justify-center py-8 px-4 bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-center">
               <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5">
                 <PiggyBank className="w-7 h-7" />
               </div>
               <h3 className="font-black text-slate-800 text-base">
-                No Accounts Created Yet
+                No Accounts Found
               </h3>
               <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
-                Welcome to Exchange Manager! Create your first account to manage your bank balances, daily pocket money, and expenses.
+                Create your personal profile to manage your bank balances, daily pocket money, and expenses.
               </p>
               <button
                 type="button"
@@ -111,7 +108,7 @@ export default function ProfileSelectScreen({
               No profiles matching "{searchQuery}"
             </div>
           ) : (
-            /* SHOW ALL ACCOUNTS CLEARLY & ELEGANTLY */
+            /* All User Profile Cards */
             filteredUsers.map((u) => (
               <button
                 key={u.id}
@@ -123,7 +120,7 @@ export default function ProfileSelectScreen({
                 className="w-full p-3.5 bg-slate-50 hover:bg-blue-50/70 rounded-2xl border border-slate-200/90 hover:border-blue-300 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between group active:scale-[0.99] text-left"
               >
                 <div className="flex items-center gap-3.5 min-w-0">
-                  {/* User Avatar with subtle ring */}
+                  {/* User Avatar */}
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500/25 bg-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
                     {u.avatar ? (
                       <img
@@ -156,9 +153,9 @@ export default function ProfileSelectScreen({
           )}
         </div>
 
-        {/* 4. CREATE NEW PROFILE BUTTON */}
+        {/* 3. FIXED BOTTOM ACTION (Pinned "+ Create New Profile" button) */}
         {users.length > 0 && (
-          <div className="pt-3 border-t border-slate-100 mt-auto">
+          <div className="p-4 pt-2 bg-white border-t border-slate-100 shrink-0">
             <button
               type="button"
               onClick={() => {
