@@ -5,59 +5,58 @@ export default function SplashScreen({ onFinish }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Smooth progress bar animation
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(onFinish, 200);
+          setTimeout(onFinish, 180);
           return 100;
         }
-        return prev + 15;
+        return prev + 18;
       });
-    }, 100);
+    }, 90);
 
     return () => clearInterval(interval);
   }, [onFinish]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-slate-900 via-slate-950 to-indigo-950 text-white overflow-hidden animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-sky-50 via-white to-blue-50 text-slate-800 overflow-hidden animate-in fade-in duration-200">
       
-      {/* Ambient background glow discs */}
-      <div className="absolute top-1/4 -left-20 w-80 h-80 rounded-full bg-pink-500/15 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full bg-blue-500/15 blur-3xl pointer-events-none" />
+      {/* Soft ambient light blue glows */}
+      <div className="absolute top-1/4 -left-20 w-80 h-80 rounded-full bg-blue-400/10 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full bg-sky-300/15 blur-3xl pointer-events-none" />
 
       <div className="flex flex-col items-center max-w-xs w-full px-6 text-center z-10">
         
-        {/* Floating Glowing Piggy Logo */}
-        <div className="relative mb-6">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-rose-500 via-pink-500 to-indigo-600 flex items-center justify-center text-white shadow-[0_15px_35px_rgba(244,63,94,0.4)] animate-pulse">
-            <PiggyBank className="w-10 h-10 stroke-[2.2]" />
+        {/* Floating Glowing Piggy Logo in Clean Blue & Pink Accent */}
+        <div className="relative mb-5">
+          <div className="w-18 h-18 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 animate-pulse">
+            <PiggyBank className="w-9 h-9 stroke-[2.2]" />
           </div>
           
-          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-blue-500/80 backdrop-blur-xs flex items-center justify-center text-amber-300 shadow-md">
+          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center text-white shadow-sm">
             <Sparkles className="w-3.5 h-3.5" />
           </div>
         </div>
 
         {/* Brand Name */}
-        <h1 className="text-2xl font-black tracking-tight text-white mb-1">
+        <h1 className="text-2xl font-black tracking-tight text-slate-900 mb-0.5">
           Exchange Manager
         </h1>
-        <p className="text-xs font-semibold text-slate-400 mb-8">
-          Personal Finance & Expense Vault
+        <p className="text-xs font-bold text-slate-400 mb-6">
+          Daily Finance & Vault
         </p>
 
-        {/* Sleek Progress Bar */}
-        <div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden p-0.5">
+        {/* Clean Light Blue Progress Bar */}
+        <div className="w-44 h-1.5 bg-slate-200/80 rounded-full overflow-hidden p-0.5">
           <div
-            className="h-full bg-gradient-to-r from-pink-500 via-indigo-500 to-blue-500 rounded-full transition-all duration-150"
+            className="h-full bg-gradient-to-r from-blue-600 to-sky-400 rounded-full transition-all duration-100"
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-3">
-          Loading Vault...
+        <span className="text-[10px] font-black text-blue-600/70 uppercase tracking-widest mt-3">
+          Loading...
         </span>
 
       </div>
