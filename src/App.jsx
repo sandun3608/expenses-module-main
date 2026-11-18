@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SplashScreen from './components/SplashScreen';
 import Navbar from './components/Navbar';
 import ProfileSelectScreen from './components/ProfileSelectScreen';
 import PinModal from './components/PinModal';
@@ -42,6 +43,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addCashModalOpen, setAddCashModalOpen] = useState(false);
   const [forceDailyCheckin, setForceDailyCheckin] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Save currentUserId changes to localStorage
   useEffect(() => {
@@ -149,6 +151,13 @@ export default function App() {
     setTempProfileData(null);
     setForceDailyCheckin(false); // Go directly to dashboard!
   };
+
+  // -------------------------------------------------------------
+  // ROUTE 0: Splash / Loading Screen (App launch animation)
+  // -------------------------------------------------------------
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
 
   // -------------------------------------------------------------
   // ROUTE 1: Creation Mode
