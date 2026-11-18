@@ -6,6 +6,7 @@ import DailyPocketPage from './components/DailyPocketPage';
 import SummaryDashboard from './components/SummaryDashboard';
 import BankModal from './components/BankModal';
 import SettingsModal from './components/SettingsModal';
+import AddCashModal from './components/AddCashModal';
 import { storage, getTodayDateKey } from './utils/storage';
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
   const [banks, setBanks] = useState(() => storage.getBanks());
   const [dailySessions, setDailySessions] = useState(() => storage.getDailySessions());
   const [expenses, setExpenses] = useState(() => storage.getExpenses());
+  const [inflows, setInflows] = useState(() => storage.getInflows());
   const [bankTransactions, setBankTransactions] = useState(() => storage.getBankTransactions());
   const [frequentReasons, setFrequentReasons] = useState(() => storage.getReasons());
   const [savingsGoals, setSavingsGoals] = useState(() => storage.getSavingsGoals());
@@ -34,6 +36,7 @@ export default function App() {
   const [bankModalOpen, setBankModalOpen] = useState(false);
   const [bankModalMode, setBankModalMode] = useState('add_money'); // 'add_money' or 's1_manager'
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [addCashModalOpen, setAddCashModalOpen] = useState(false);
 
   // Check if today needs initial pocket money entry
   useEffect(() => {
@@ -51,6 +54,7 @@ export default function App() {
     setBankTransactions(storage.getBankTransactions());
     setFrequentReasons(storage.getReasons());
     setSavingsGoals(storage.getSavingsGoals());
+    setInflows(storage.getInflows());
   };
 
   // 1. Setup Step 1 -> Step 2
@@ -205,6 +209,95 @@ export default function App() {
     const updatedTxs = [newTx, ...bankTransactions];
     storage.setBankTransactions(updatedTxs);
     setBankTransactions(updatedTxs);
+
+    // Also record in inflows
+    const newInflow = {
+      id: 'inf-' + Date.now(),
+      amount: Number(amount),
+      note: note || `Deposit to ${targetBankName}`,
+      destination: 'bank',
+      bankId,
+      bankName: targetBankName,
+      date: todayKey,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now(),
+    };
+    const updatedInflows = [newInflow, ...inflows];
+    storage.setInflows(updatedInflows);
+    setInflows(updatedInflows);
+  };
+
+  // Add Cash directly to Pocket Money (User requirement)
+  const handleAddCash = ({ amount, note }) => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    // Update today's pocket cash
+    const currentStarting = todaySession?.startingPocketMoney || 0;
+    const currentAdded = todaySession?.addedCash || 0;
+    const updatedSessions = {
+      ...dailySessions,
+      [todayKey]: {
+        ...todaySession,
+        date: todayKey,
+        startingPocketMoney: currentStarting,
+        addedCash: currentAdded + Number(amount),
+        lastLogged: new Date().toISOString(),
+      },
+    };
+    storage.setDailySessions(updatedSessions);
+    setDailySessions(updatedSessions);
+
+    // Record Inflow
+    const newInflow = {
+      id: 'inf-' + Date.now(),
+      amount: Number(amount),
+      note: note || 'Cash Added to Pocket',
+      destination: 'pocket',
+      bankId: null,
+      bankName: null,
+      date: todayKey,
+      time: timeStr,
+      timestamp: Date.now(),
+    };
+    const updatedInflows = [newInflow, ...inflows];
+    storage.setInflows(updatedInflows);
+    setInflows(updatedInflows);
+  };
+
+  // Delete Inflow / Received money
+  const handleDeleteInflow = (id) => {
+    const target = inflows.find((i) => i.id === id);
+    if (!target) return;
+
+    if (target.destination === 'pocket') {
+      const currentAdded = todaySession?.addedCash || 0;
+      const updatedSessions = {
+        ...dailySessions,
+        [todayKey]: {
+          ...todaySession,
+          addedCash: Math.max(0, currentAdded - Number(target.amount)),
+        },
+      };
+      storage.setDailySessions(updatedSessions);
+      setDailySessions(updatedSessions);
+    } else if (target.destination === 'bank' && target.bankId) {
+      const updatedBanks = banks.map((b) => {
+        if (b.id === target.bankId) {
+          return {
+            ...b,
+            balance: Math.max(0, (Number(b.balance) || 0) - Number(target.amount)),
+          };
+        }
+        return b;
+      });
+      storage.setBanks(updatedBanks);
+      setBanks(updatedBanks);
+    }
+
+    const updated = inflows.filter((i) => i.id !== id);
+    storage.setInflows(updated);
+    setInflows(updated);
   };
 
   // ATM / Bank Withdrawal to Cash (deduct bank, add to today's starting cash)
@@ -401,7 +494,7 @@ export default function App() {
   };
 
   // Calculations for today
-  const startingPocketMoney = todaySession?.startingPocketMoney || 0;
+  const startingPocketMoney = (todaySession?.startingPocketMoney || 0) + (todaySession?.addedCash || 0);
   const todayCashExpenses = expenses
     .filter((e) => e.date === todayKey && e.paymentMethod === 'cash')
     .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
@@ -467,6 +560,7 @@ export default function App() {
             banks={banks}
             startingPocketMoney={startingPocketMoney}
             expenses={expenses}
+            inflows={inflows}
             frequentReasons={frequentReasons}
             savingsGoals={savingsGoals}
             activeTab={activeTab}
@@ -479,9 +573,11 @@ export default function App() {
               setBankModalMode('add_money');
               setBankModalOpen(true);
             }}
+            onOpenAddCash={() => setAddCashModalOpen(true)}
             onOpenDailyCheckin={() => setShowDailyCheckin(true)}
             onAddExpense={handleAddExpense}
             onDeleteExpense={handleDeleteExpense}
+            onDeleteInflow={handleDeleteInflow}
             onAddGoal={handleAddGoal}
             onUpdateGoal={handleUpdateGoal}
             onDeleteGoal={handleDeleteGoal}
@@ -491,7 +587,7 @@ export default function App() {
         </main>
       </div>
 
-      {/* Bank Modal (Add Money '+' and S1 Manager) */}
+      {/* Bank Modal (Add Money '+' and Accounts Manager) */}
       <BankModal
         isOpen={bankModalOpen}
         mode={bankModalMode}
@@ -502,6 +598,15 @@ export default function App() {
         onAddBankMoney={handleAddBankMoney}
         onWithdrawToPocket={handleWithdrawToPocket}
         bankTransactions={bankTransactions}
+      />
+
+      {/* Add Cash Modal (User requirement: Add cash into pocket directly) */}
+      <AddCashModal
+        isOpen={addCashModalOpen}
+        onClose={() => setAddCashModalOpen(false)}
+        currency={profile.currency}
+        todayPocketRemaining={todayPocketRemaining}
+        onAddCash={handleAddCash}
       />
 
       {/* Settings Modal (Edit Profile, Export/Import, Reset) */}

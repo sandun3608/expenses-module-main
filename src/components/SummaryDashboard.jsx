@@ -11,15 +11,18 @@ export default function SummaryDashboard({
   banks,
   startingPocketMoney,
   expenses,
+  inflows = [],
   frequentReasons,
   savingsGoals,
   activeTab = 'overview',
   setActiveTab,
   onOpenBanks,
   onOpenAddBankMoney,
+  onOpenAddCash,
   onOpenDailyCheckin,
   onAddExpense,
   onDeleteExpense,
+  onDeleteInflow,
   onAddGoal,
   onUpdateGoal,
   onDeleteGoal,
@@ -110,14 +113,22 @@ export default function SummaryDashboard({
             </p>
           </div>
 
-          {/* Quick Cash Action */}
-          <div className="pt-2">
+          {/* Quick Cash Action: Add Cash In & Change Cash */}
+          <div className="flex items-center gap-1.5 pt-2">
+            <button
+              onClick={onOpenAddCash}
+              className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] shadow-xs active:scale-95 transition flex items-center justify-center gap-1"
+              title="Add received cash to pocket"
+            >
+              <Plus className="w-3 h-3 stroke-[3]" />
+              <span>+ Cash In</span>
+            </button>
             <button
               onClick={onOpenDailyCheckin}
-              className="w-full py-1.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 transition active:scale-95"
+              className="py-1.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition"
+              title="Adjust starting cash"
             >
-              <Sun className="w-3 h-3 text-amber-500" />
-              <span>Change Cash</span>
+              Change
             </button>
           </div>
         </div>
@@ -177,8 +188,10 @@ export default function SummaryDashboard({
 
           <ExpenseList
             expenses={expenses}
+            inflows={inflows}
             currency={profile.currency}
             onDeleteExpense={onDeleteExpense}
+            onDeleteInflow={onDeleteInflow}
           />
         </div>
       )}
@@ -207,6 +220,7 @@ export default function SummaryDashboard({
           todayCardSpent={todayCardExpenses}
           todayPocketRemaining={todayPocketRemaining}
           expenses={expenses}
+          inflows={inflows}
         />
       )}
 

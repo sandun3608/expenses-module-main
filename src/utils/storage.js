@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   BANK_TX: 'sp_bank_tx_v3',
   REASONS: 'sp_reasons_v3',
   SAVINGS: 'sp_savings_v3',
+  INFLOWS: 'sp_inflows_v3',
 };
 
 // Clean modern SVG avatar options (User initials & clean minimal icons, no random fake model photos)
@@ -183,6 +184,20 @@ export const storage = {
     localStorage.setItem(STORAGE_KEYS.SAVINGS, JSON.stringify(goals));
   },
 
+  // Inflows Storage (Cash additions & Bank deposits)
+  getInflows: () => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.INFLOWS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  setInflows: (inflows) => {
+    localStorage.setItem(STORAGE_KEYS.INFLOWS, JSON.stringify(inflows));
+  },
+
   getYesterdayLeftover: () => {
     const sessions = storage.getDailySessions();
     const expenses = storage.getExpenses();
@@ -196,13 +211,16 @@ export const storage = {
 
     const lastDate = dates[0];
     const session = sessions[lastDate];
-    if (!session || typeof session.startingPocketMoney !== 'number') return 0;
+    if (!session) return 0;
+
+    const starting = typeof session.startingPocketMoney === 'number' ? session.startingPocketMoney : 0;
+    const added = typeof session.addedCash === 'number' ? session.addedCash : 0;
 
     const dayCashExpenses = expenses
       .filter((e) => e.date === lastDate && e.paymentMethod === 'cash')
       .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
-    const leftover = session.startingPocketMoney - dayCashExpenses;
+    const leftover = (starting + added) - dayCashExpenses;
     return Math.max(0, leftover);
   },
 

@@ -1,100 +1,186 @@
 import React, { useState } from 'react';
-import { Trash2, Search, Clock, CreditCard, Wallet } from 'lucide-react';
+import { Trash2, Search, ArrowDownLeft, ArrowUpRight, Clock, Wallet, Landmark } from 'lucide-react';
 import { CATEGORIES, formatCurrency, getTodayDateKey } from '../utils/storage';
 import { sound } from '../utils/sound';
 
 export default function ExpenseList({
   expenses = [],
+  inflows = [],
   currency = 'Rs.',
   onDeleteExpense,
+  onDeleteInflow,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all'); // 'all' | 'expense' | 'income'
   const todayKey = getTodayDateKey();
 
-  const filtered = expenses.filter((e) => {
-    if (searchTerm.trim() && !e.reason.toLowerCase().includes(searchTerm.toLowerCase())) {
+  // Combine expenses and inflows into a unified, chronological feed
+  const combinedFeed = [
+    ...expenses.map((e) => ({
+      ...e,
+      feedType: 'expense', // outgoing
+    })),
+    ...inflows.map((inf) => ({
+      ...inf,
+      feedType: 'income', // incoming
+      reason: inf.note || (inf.destination === 'pocket' ? 'Cash Received' : 'Bank Deposit'),
+      category: 'income',
+    })),
+  ].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  // Filter feed
+  const filtered = combinedFeed.filter((item) => {
+    if (filterType === 'expense' && item.feedType !== 'expense') return false;
+    if (filterType === 'income' && item.feedType !== 'income') return false;
+    if (searchTerm.trim() && !item.reason.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     return true;
   });
 
-  const totalFilteredAmount = filtered.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  // Calculate totals
+  const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const totalInflows = inflows.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
 
-  const handleDelete = (id) => {
-    if (window.confirm('Delete this expense?')) {
-      sound.playClick();
-      onDeleteExpense(id);
+  const handleDelete = (item) => {
+    if (item.feedType === 'income') {
+      if (window.confirm('Delete this received money entry?')) {
+        sound.playClick();
+        onDeleteInflow(item.id);
+      }
+    } else {
+      if (window.confirm('Delete this expense?')) {
+        sound.playClick();
+        onDeleteExpense(item.id);
+      }
     }
   };
 
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
       
-      {/* Header & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      {/* 1. Header with Inflow vs Expense mini totals */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
-          <h2 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
-            <span>Expenses Feed</span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-              {filtered.length}
-            </span>
+          <h2 className="font-black text-slate-800 text-base sm:text-lg">
+            Activity & Expenses Feed
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Total: <strong className="text-slate-700 font-black">{formatCurrency(totalFilteredAmount, currency)}</strong>
+            Spacious chronological transaction history
           </p>
         </div>
 
+        {/* Mini stats pills */}
+        <div className="flex items-center gap-2">
+          <div className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+            +{formatCurrency(totalInflows, currency)}
+          </div>
+          <div className="px-2.5 py-1 rounded-xl bg-rose-50 text-rose-700 text-xs font-bold border border-rose-100">
+            -{formatCurrency(totalExpenses, currency)}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Filter Pills & Search */}
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100">
+          <button
+            type="button"
+            onClick={() => setFilterType('all')}
+            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition ${
+              filterType === 'all'
+                ? 'bg-white text-blue-700 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            All Activity
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterType('expense')}
+            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition ${
+              filterType === 'expense'
+                ? 'bg-white text-rose-700 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Expenses (-)
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterType('income')}
+            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition ${
+              filterType === 'income'
+                ? 'bg-white text-emerald-700 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Received (+)
+          </button>
+        </div>
+
         {/* Search */}
-        <div className="relative w-full sm:w-56">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search expenses..."
-            className="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 outline-none font-semibold text-slate-700"
+            placeholder="Search transactions..."
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 outline-none font-semibold text-slate-700"
           />
         </div>
       </div>
 
-      {/* Expense List Rows */}
+      {/* 3. Spacious Feed Rows (ida athuwa, piliwelata) */}
       {filtered.length === 0 ? (
         <div className="text-center py-10 rounded-2xl bg-slate-50/70 border border-dashed border-slate-200">
           <Wallet className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-          <p className="text-xs font-bold text-slate-600">No expenses recorded yet</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Add an expense above to see it here</p>
+          <p className="text-xs font-bold text-slate-600">No transactions recorded yet</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Expenses and received money will appear here cleanly</p>
         </div>
       ) : (
-        <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
           {filtered.map((item) => {
+            const isIncome = item.feedType === 'income';
             const catObj = CATEGORIES.find((c) => c.id === item.category) || CATEGORIES[CATEGORIES.length - 1];
 
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition"
+                className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/80 hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition shadow-2xs"
               >
-                {/* Left: Icon & Details */}
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-2xl ${catObj.color || 'bg-blue-600'} text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0`}>
-                    {catObj.label.slice(0, 1)}
+                {/* Left: Icon & Description */}
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${
+                      isIncome
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : `${catObj.color || 'bg-blue-600'} text-white`
+                    }`}
+                  >
+                    {isIncome ? (
+                      <ArrowDownLeft className="w-5 h-5 stroke-[2.5]" />
+                    ) : (
+                      catObj.label.slice(0, 1)
+                    )}
                   </div>
 
-                  <div>
-                    <p className="font-extrabold text-slate-800 text-sm leading-snug">
+                  <div className="min-w-0">
+                    <p className="font-extrabold text-slate-800 text-sm sm:text-base leading-snug truncate">
                       {item.reason}
                     </p>
 
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
                       <span>{item.time || 'Today'}</span>
                       <span>•</span>
-                      {item.paymentMethod === 'card' ? (
-                        <span className="font-bold text-blue-600">
-                          💳 {item.bankName || 'Bank'}
+                      {isIncome ? (
+                        <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px]">
+                          {item.destination === 'pocket' ? '💵 Cash Inflow' : `🏦 Bank: ${item.bankName || 'Deposit'}`}
                         </span>
                       ) : (
-                        <span className="font-bold text-emerald-600">
-                          💵 Cash
+                        <span className="font-bold text-slate-600 bg-slate-200/60 px-2 py-0.5 rounded-md text-[10px]">
+                          {item.paymentMethod === 'card' ? `💳 ${item.bankName || 'Bank'}` : '💵 Pocket Cash'}
                         </span>
                       )}
                     </div>
@@ -102,14 +188,18 @@ export default function ExpenseList({
                 </div>
 
                 {/* Right: Amount & Delete */}
-                <div className="flex items-center gap-2.5">
-                  <span className="font-black text-sm sm:text-base text-rose-600 tracking-tight">
-                    - {formatCurrency(item.amount, currency)}
+                <div className="flex items-center gap-2.5 shrink-0 pl-2">
+                  <span
+                    className={`font-black text-sm sm:text-base tracking-tight ${
+                      isIncome ? 'text-emerald-600' : 'text-rose-600'
+                    }`}
+                  >
+                    {isIncome ? '+' : '-'} {formatCurrency(item.amount, currency)}
                   </span>
 
                   <button
                     type="button"
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => handleDelete(item)}
                     className="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 transition"
                     title="Delete"
                   >
