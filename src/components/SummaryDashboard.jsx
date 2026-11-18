@@ -1,5 +1,5 @@
 import React from 'react';
-import { Landmark, Plus, Wallet, PiggyBank, PieChart, Sun, ArrowUpRight } from 'lucide-react';
+import { Landmark, Plus, Wallet, PiggyBank, PieChart, Sun, ArrowRightLeft } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
 import AnalyticsCharts from './AnalyticsCharts';
@@ -15,7 +15,7 @@ export default function SummaryDashboard({
   savingsGoals,
   activeTab = 'overview',
   setActiveTab,
-  onOpenS1Banks,
+  onOpenBanks,
   onOpenAddBankMoney,
   onOpenDailyCheckin,
   onAddExpense,
@@ -45,111 +45,128 @@ export default function SummaryDashboard({
   const todayPocketRemaining = Math.max(0, startingPocketMoney - todayCashExpenses);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-7 space-y-6">
+    <div className="w-full max-w-md mx-auto px-4 py-4 space-y-4 overflow-x-hidden">
       
-      {/* 1. HERO BALANCE CARD (Revolut / Apple Wallet Modern Aesthetic) */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-3xl p-6 sm:p-7 text-white shadow-xl shadow-blue-500/15">
+      {/* 1. TWO EQUAL SIDE-BY-SIDE BOXES: Bank Balance (Left) & Pocket Cash (Right) */}
+      <div className="grid grid-cols-2 gap-3">
         
-        {/* Top Badges */}
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-200 flex items-center gap-1.5">
-            <Landmark className="w-4 h-4" />
-            <span>Total Bank Balance</span>
-          </span>
-          <button
-            onClick={onOpenS1Banks}
-            className="text-xs font-bold text-white bg-white/15 hover:bg-white/20 px-3 py-1 rounded-xl backdrop-blur-xs transition"
-          >
-            S1 ({banks.length} {banks.length === 1 ? 'Bank' : 'Banks'})
-          </button>
-        </div>
+        {/* BOX 1: Total Bank Balance Card */}
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white rounded-3xl p-4 shadow-lg shadow-blue-500/15 flex flex-col justify-between min-h-[145px]">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-200">
+                Bank Balance
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center text-white">
+                <Landmark className="w-3.5 h-3.5" />
+              </div>
+            </div>
 
-        {/* Big Total Bank Amount & Quick Deposit */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/15">
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-            {formatCurrency(totalBankBalance, profile.currency)}
-          </h1>
+            <h3 className="text-lg sm:text-xl font-black tracking-tight leading-tight mt-1 truncate">
+              {formatCurrency(totalBankBalance, profile.currency)}
+            </h3>
+            <p className="text-[10px] text-blue-200/80 mt-0.5 truncate">
+              {banks.length} {banks.length === 1 ? 'Account' : 'Accounts'}
+            </p>
+          </div>
 
-          <div className="flex items-center gap-2">
+          {/* Quick Bank Actions */}
+          <div className="flex items-center gap-1.5 pt-2">
             <button
               onClick={onOpenAddBankMoney}
-              className="px-4 py-2.5 rounded-2xl bg-white hover:bg-blue-50 text-blue-700 font-extrabold text-xs sm:text-sm shadow-sm active:scale-95 transition flex items-center gap-1.5"
+              className="flex-1 py-1.5 px-2 rounded-xl bg-white text-blue-700 font-black text-[11px] shadow-xs active:scale-95 transition flex items-center justify-center gap-1"
+              title="Deposit money"
             >
-              <Plus className="w-4 h-4" />
-              <span>Deposit to Bank</span>
+              <Plus className="w-3 h-3 stroke-[3]" />
+              <span>Deposit</span>
+            </button>
+            <button
+              onClick={onOpenBanks}
+              className="py-1.5 px-2 rounded-xl bg-white/15 hover:bg-white/20 text-white font-bold text-[11px] transition"
+              title="View & manage banks"
+            >
+              Banks
             </button>
           </div>
         </div>
 
-        {/* Pocket Cash Sub-Row */}
-        <div className="flex items-center justify-between pt-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center text-white">
-              <Wallet className="w-4 h-4" />
+        {/* BOX 2: Pocket Cash Card */}
+        <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-sm flex flex-col justify-between min-h-[145px]">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                Pocket Cash
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                <Wallet className="w-3.5 h-3.5" />
+              </div>
             </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-blue-200">
-                Today's Pocket Cash Left
-              </p>
-              <p className="text-lg sm:text-xl font-black text-white">
-                {formatCurrency(todayPocketRemaining, profile.currency)}
-              </p>
-            </div>
+
+            <h3 className="text-lg sm:text-xl font-black text-slate-800 tracking-tight leading-tight mt-1 truncate">
+              {formatCurrency(todayPocketRemaining, profile.currency)}
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+              Cash in Hand Left
+            </p>
           </div>
 
-          <button
-            onClick={onOpenDailyCheckin}
-            className="text-xs font-bold text-blue-200 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl transition flex items-center gap-1"
-          >
-            <Sun className="w-3.5 h-3.5 text-amber-300" />
-            <span>Change</span>
-          </button>
+          {/* Quick Cash Action */}
+          <div className="pt-2">
+            <button
+              onClick={onOpenDailyCheckin}
+              className="w-full py-1.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 transition active:scale-95"
+            >
+              <Sun className="w-3 h-3 text-amber-500" />
+              <span>Change Cash</span>
+            </button>
+          </div>
         </div>
 
       </div>
 
-      {/* 2. SEGMENTED TABS (Clean iOS / Modern Web Style) */}
-      <div className="flex p-1.5 rounded-2xl bg-slate-200/70 max-w-md mx-auto">
+      {/* 2. SEGMENTED APP TABS (iOS Pill Switcher) */}
+      <div className="flex p-1 rounded-2xl bg-slate-200/80">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition ${
+          className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
             activeTab === 'overview'
               ? 'bg-white text-blue-700 shadow-sm'
               : 'text-slate-600 hover:text-slate-800'
           }`}
         >
-          <Wallet className="w-4 h-4" />
+          <Wallet className="w-3.5 h-3.5" />
           <span>Expenses</span>
         </button>
 
         <button
           onClick={() => setActiveTab('savings')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition ${
+          className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
             activeTab === 'savings'
               ? 'bg-white text-blue-700 shadow-sm'
               : 'text-slate-600 hover:text-slate-800'
           }`}
         >
-          <PiggyBank className="w-4 h-4" />
+          <PiggyBank className="w-3.5 h-3.5" />
           <span>Savings ({savingsGoals.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('analytics')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition ${
+          className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
             activeTab === 'analytics'
               ? 'bg-white text-blue-700 shadow-sm'
               : 'text-slate-600 hover:text-slate-800'
           }`}
         >
-          <PieChart className="w-4 h-4" />
+          <PieChart className="w-3.5 h-3.5" />
           <span>Reports</span>
         </button>
       </div>
 
-      {/* TAB 1: Expenses Entry & Feed */}
+      {/* TAB CONTENT */}
+      {/* 1. EXPENSES */}
       {activeTab === 'overview' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <ExpenseForm
             currency={profile.currency}
             banks={banks}
@@ -166,7 +183,7 @@ export default function SummaryDashboard({
         </div>
       )}
 
-      {/* TAB 2: Savings Module */}
+      {/* 2. SAVINGS */}
       {activeTab === 'savings' && (
         <SavingsModule
           currency={profile.currency}
@@ -181,7 +198,7 @@ export default function SummaryDashboard({
         />
       )}
 
-      {/* TAB 3: Reports & Graphs */}
+      {/* 3. REPORTS */}
       {activeTab === 'analytics' && (
         <AnalyticsCharts
           currency={profile.currency}

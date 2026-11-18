@@ -452,55 +452,44 @@ export default function App() {
   // ROUTE 3: Main Summary / Dashboard Page
   // -------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-slate-50/70 pb-16">
-      {/* Top Navigation Bar */}
-      <Navbar
-        profile={profile}
-        totalBankBalance={totalBankBalance}
-        todayPocketRemaining={todayPocketRemaining}
-        totalSavedMoney={totalSavedMoney}
-        onOpenS1Banks={() => {
-          setBankModalMode('s1_manager');
-          setBankModalOpen(true);
-        }}
-        onOpenAddBankMoney={() => {
-          setBankModalMode('add_money');
-          setBankModalOpen(true);
-        }}
-        onOpenDailyCheckin={() => setShowDailyCheckin(true)}
-        onOpenSettings={() => setSettingsOpen(true)}
-        onOpenSavings={() => setActiveTab('savings')}
-      />
-
-      {/* Main Dashboard Body */}
-      <main>
-        <SummaryDashboard
+    <div className="min-h-screen bg-slate-100 flex justify-center overflow-x-hidden">
+      <div className="w-full max-w-md bg-slate-50/50 min-h-screen shadow-2xl border-x border-slate-200/60 flex flex-col overflow-x-hidden">
+        {/* Top Navigation Bar (Clean & Minimalist) */}
+        <Navbar
           profile={profile}
-          banks={banks}
-          startingPocketMoney={startingPocketMoney}
-          expenses={expenses}
-          frequentReasons={frequentReasons}
-          savingsGoals={savingsGoals}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onOpenS1Banks={() => {
-            setBankModalMode('s1_manager');
-            setBankModalOpen(true);
-          }}
-          onOpenAddBankMoney={() => {
-            setBankModalMode('add_money');
-            setBankModalOpen(true);
-          }}
-          onOpenDailyCheckin={() => setShowDailyCheckin(true)}
-          onAddExpense={handleAddExpense}
-          onDeleteExpense={handleDeleteExpense}
-          onAddGoal={handleAddGoal}
-          onUpdateGoal={handleUpdateGoal}
-          onDeleteGoal={handleDeleteGoal}
-          onDepositToGoal={handleDepositToGoal}
-          onWithdrawFromGoal={handleWithdrawFromGoal}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
-      </main>
+
+        {/* Main Dashboard Body */}
+        <main className="flex-1 pb-8">
+          <SummaryDashboard
+            profile={profile}
+            banks={banks}
+            startingPocketMoney={startingPocketMoney}
+            expenses={expenses}
+            frequentReasons={frequentReasons}
+            savingsGoals={savingsGoals}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onOpenBanks={() => {
+              setBankModalMode('s1_manager');
+              setBankModalOpen(true);
+            }}
+            onOpenAddBankMoney={() => {
+              setBankModalMode('add_money');
+              setBankModalOpen(true);
+            }}
+            onOpenDailyCheckin={() => setShowDailyCheckin(true)}
+            onAddExpense={handleAddExpense}
+            onDeleteExpense={handleDeleteExpense}
+            onAddGoal={handleAddGoal}
+            onUpdateGoal={handleUpdateGoal}
+            onDeleteGoal={handleDeleteGoal}
+            onDepositToGoal={handleDepositToGoal}
+            onWithdrawFromGoal={handleWithdrawFromGoal}
+          />
+        </main>
+      </div>
 
       {/* Bank Modal (Add Money '+' and S1 Manager) */}
       <BankModal

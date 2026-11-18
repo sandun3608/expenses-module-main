@@ -1,16 +1,26 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
-    @apply bg-slate-50 text-slate-800 antialiased font-sans;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  html, body {
+    @apply bg-slate-100 text-slate-900 antialiased font-sans;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  input, textarea, select {
+    user-select: text;
+    -webkit-user-select: text;
   }
 }
 
-/* Custom scrollbars & smooth animations */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -18,16 +28,4 @@
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-@keyframes pulseSubtle {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-}
-
-.animate-pulse-subtle {
-  animation: pulseSubtle 2s infinite ease-in-out;
 }

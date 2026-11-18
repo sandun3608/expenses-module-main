@@ -134,7 +134,7 @@ export default function BankModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-blue-100 p-5 sm:p-7">
+      <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-5 sm:p-6">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
@@ -143,11 +143,11 @@ export default function BankModal({
               {mode === 'add_money' ? <Plus className="w-5 h-5" /> : <Landmark className="w-5 h-5" />}
             </div>
             <div>
-              <h3 className="font-extrabold text-slate-800 text-lg sm:text-xl">
-                {mode === 'add_money' ? 'Deposit Money to Bank' : 'S1 - Bank Accounts & Vaults'}
+              <h3 className="font-extrabold text-slate-800 text-lg">
+                {mode === 'add_money' ? 'Deposit to Bank' : 'Bank Accounts'}
               </h3>
-              <p className="text-xs text-slate-500">
-                {mode === 'add_money' ? 'Add funds into one of your banks' : 'View, edit balances, or add new banks'}
+              <p className="text-xs text-slate-400">
+                {mode === 'add_money' ? 'Add funds into one of your banks' : 'Manage your connected bank balances'}
               </p>
             </div>
           </div>

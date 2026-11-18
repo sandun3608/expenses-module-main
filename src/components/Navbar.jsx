@@ -1,83 +1,46 @@
 import React from 'react';
-import { Wallet, Landmark, Settings, Sun, PlusCircle, User } from 'lucide-react';
-import { formatCurrency } from '../utils/storage';
+import { Settings, User } from 'lucide-react';
 
 export default function Navbar({
   profile,
-  totalBankBalance,
-  todayPocketRemaining,
-  onOpenS1Banks,
-  onOpenAddBankMoney,
-  onOpenDailyCheckin,
   onOpenSettings,
 }) {
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
-          
-          {/* Logo & App Name */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-sm">
-              <Wallet className="w-5 h-5" />
-            </div>
-            <span className="font-black text-lg tracking-tight text-slate-800">
-              SmartPocket
-            </span>
+    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100">
+      <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
+        
+        {/* Left: User Profile & Greeting */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500/20 bg-slate-100 flex items-center justify-center shrink-0 shadow-xs">
+            {profile.avatar ? (
+              <img
+                src={profile.avatar}
+                alt={profile.name || 'User'}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User className="w-5 h-5 text-slate-400" />
+            )}
           </div>
-
-          {/* Right Action Icons */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            
-            {/* Quick S1 Banks Button */}
-            <button
-              onClick={onOpenS1Banks}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs sm:text-sm transition active:scale-95"
-              title="Bank accounts (S1)"
-            >
-              <Landmark className="w-3.5 h-3.5" />
-              <span>S1 Banks</span>
-            </button>
-
-            {/* Quick Deposit '+' Button */}
-            <button
-              onClick={onOpenAddBankMoney}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-sm transition active:scale-95"
-              title="Deposit money"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Deposit</span>
-            </button>
-
-            {/* Daily Pocket Checkin */}
-            <button
-              onClick={onOpenDailyCheckin}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-              title="Change today's pocket cash"
-            >
-              <Sun className="w-4 h-4 text-amber-500" />
-            </button>
-
-            {/* Profile Avatar / Settings */}
-            <button
-              onClick={onOpenSettings}
-              className="w-9 h-9 rounded-full overflow-hidden border-2 border-slate-200 hover:border-blue-500 transition ml-1 flex items-center justify-center bg-slate-100"
-              title="Settings & Profile"
-            >
-              {profile.avatar ? (
-                <img
-                  src={profile.avatar}
-                  alt={profile.name || 'User'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-5 h-5 text-slate-400" />
-              )}
-            </button>
-
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Welcome back
+            </p>
+            <h2 className="font-extrabold text-slate-800 text-sm sm:text-base tracking-tight leading-tight truncate max-w-[170px]">
+              {profile.name || 'SmartPocket'}
+            </h2>
           </div>
-
         </div>
+
+        {/* Right: Single clean Settings Gear Button */}
+        <button
+          onClick={onOpenSettings}
+          className="w-10 h-10 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-600 flex items-center justify-center transition active:scale-95"
+          title="Settings & Profile"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
+
       </div>
     </header>
   );
