@@ -50,8 +50,8 @@ export default function DailyPocketPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex justify-center overflow-x-hidden p-3 sm:p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200/80 my-auto">
+    <div className="min-h-screen bg-white flex justify-center overflow-x-hidden p-3 sm:p-4">
+      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-xl border border-slate-200/80 my-auto">
         
         {/* Top Skip Button */}
         {onSkip && (

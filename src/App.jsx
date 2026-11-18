@@ -273,9 +273,9 @@ export default function App() {
   const todayPocketRemaining = Math.max(0, startingPocketMoney - todayCashExpenses);
 
   // -------------------------------------------------------------
-  // ROUTE 3: Daily Pocket Money (Optional: only when user clicks "Set / Edit")
+  // ROUTE 3: Daily Pocket Money Gate (Starting Pocket Money Check-In with Skip option)
   // -------------------------------------------------------------
-  if (forceDailyCheckin) {
+  if (!todaySession || forceDailyCheckin) {
     return (
       <DailyPocketPage
         profile={currentUser}
@@ -293,7 +293,19 @@ export default function App() {
           updateCurrentUserFields({ dailySessions: updatedSessions });
           setForceDailyCheckin(false);
         }}
-        onSkip={() => setForceDailyCheckin(false)}
+        onSkip={() => {
+          const updatedSessions = {
+            ...dailySessions,
+            [todayKey]: {
+              date: todayKey,
+              startingPocketMoney: 0,
+              skipped: true,
+              lastLogged: new Date().toISOString(),
+            },
+          };
+          updateCurrentUserFields({ dailySessions: updatedSessions });
+          setForceDailyCheckin(false);
+        }}
       />
     );
   }
