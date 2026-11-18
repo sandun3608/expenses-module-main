@@ -14,6 +14,7 @@ export const CATEGORIES = [
   { id: 'food', label: 'Food & Dining', icon: 'Utensils', color: 'bg-amber-500' },
   { id: 'transport', label: 'Transport & Travel', icon: 'Bus', color: 'bg-blue-500' },
   { id: 'grocery', label: 'Groceries & Market', icon: 'ShoppingCart', color: 'bg-emerald-500' },
+  { id: 'loan', label: 'Loan / Given', icon: 'HandCoins', color: 'bg-orange-500' },
   { id: 'bills', label: 'Bills & Utilities', icon: 'Receipt', color: 'bg-rose-500' },
   { id: 'shopping', label: 'Shopping & Clothes', icon: 'ShoppingBag', color: 'bg-purple-500' },
   { id: 'entertainment', label: 'Entertainment & Fun', icon: 'Film', color: 'bg-pink-500' },

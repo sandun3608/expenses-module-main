@@ -265,7 +265,16 @@ export default function App() {
   // -------------------------------------------------------------
 
   // Add Expense
-  const handleAddExpense = ({ amount, reason, category, paymentMethod, bankId, bankName }) => {
+  const handleAddExpense = ({
+    amount,
+    reason,
+    category,
+    paymentMethod,
+    bankId,
+    bankName,
+    recipientName,
+    dueDate,
+  }) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
@@ -277,6 +286,9 @@ export default function App() {
       paymentMethod,
       bankId: paymentMethod === 'card' ? bankId : null,
       bankName: paymentMethod === 'card' ? bankName : null,
+      recipientName: recipientName || null,
+      dueDate: dueDate || null,
+      isSettled: false,
       date: todayKey,
       time: timeStr,
       timestamp: Date.now(),
@@ -344,6 +356,22 @@ export default function App() {
       expenses: updatedExpenses,
       banks: updatedBanks,
     });
+  };
+
+  // Toggle Settled / Repaid status for Loans and Bills
+  const handleToggleSettledExpense = (id) => {
+    const updatedExpenses = expenses.map((e) => {
+      if (e.id === id) {
+        return {
+          ...e,
+          isSettled: !e.isSettled,
+          settledAt: !e.isSettled ? new Date().toISOString() : null,
+        };
+      }
+      return e;
+    });
+    updateCurrentUserFields({ expenses: updatedExpenses });
+    sound.playSuccess();
   };
 
   // Add Bank Deposit
@@ -692,6 +720,7 @@ export default function App() {
             onDeleteGoal={handleDeleteGoal}
             onDepositToGoal={handleDepositToGoal}
             onWithdrawFromGoal={handleWithdrawFromGoal}
+            onToggleSettledExpense={handleToggleSettledExpense}
           />
         </main>
       </div>

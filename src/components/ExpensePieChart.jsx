@@ -10,6 +10,7 @@ const CATEGORY_COLORS = {
   food: '#3b82f6',         // blue
   transport: '#0ea5e9',    // sky
   grocery: '#10b981',      // emerald
+  loan: '#f97316',         // orange
   bills: '#f43f5e',        // rose
   shopping: '#a855f7',     // purple
   entertainment: '#ec4899',// pink

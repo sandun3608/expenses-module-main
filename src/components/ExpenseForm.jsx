@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { PlusCircle, Wallet, CreditCard, Sparkles, AlertCircle } from 'lucide-react';
+import { PlusCircle, Wallet, CreditCard, Sparkles, AlertCircle, User, Calendar, HandCoins, Receipt } from 'lucide-react';
 import { CATEGORIES, formatCurrency } from '../utils/storage';
 import { sound } from '../utils/sound';
 
@@ -16,11 +16,17 @@ export default function ExpenseForm({
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'card'
   const [selectedBankId, setSelectedBankId] = useState(banks[0]?.id || '');
   
+  // New fields for Loan & Bills
+  const [recipientName, setRecipientName] = useState('');
+  const [dueDate, setDueDate] = useState('');
+
   // Autocomplete state
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const reasonInputRef = useRef(null);
   const suggestionBoxRef = useRef(null);
+
+  const isLoanOrBill = category === 'loan' || category === 'bills';
 
   const handleReasonChange = (e) => {
     const val = e.target.value;
@@ -76,15 +82,20 @@ export default function ExpenseForm({
       paymentMethod,
       bankId: paymentMethod === 'card' ? selectedBank?.id : null,
       bankName: paymentMethod === 'card' ? selectedBank?.name : null,
+      recipientName: isLoanOrBill ? recipientName.trim() : null,
+      dueDate: isLoanOrBill && dueDate ? dueDate : null,
+      isSettled: false,
     });
 
     setAmount('');
     setReason('');
+    setRecipientName('');
+    setDueDate('');
     setShowSuggestions(false);
   };
 
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs">
       
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
@@ -266,6 +277,68 @@ export default function ExpenseForm({
             ))}
           </div>
         </div>
+
+        {/* Dynamic Rows when Category is Loan or Bill (User requirement) */}
+        {isLoanOrBill && (
+          <div className="p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-xs">
+              {category === 'loan' ? (
+                <>
+                  <HandCoins className="w-4 h-4 text-amber-600" />
+                  <span>Loan Details (ණයට දුන් විස්තර)</span>
+                </>
+              ) : (
+                <>
+                  <Receipt className="w-4 h-4 text-rose-600" />
+                  <span>Bill Due Details (බිල්පත් විස්තර)</span>
+                </>
+              )}
+            </div>
+
+            {/* Row 1: Name (Person / Payee) */}
+            <div>
+              <label className="block text-[10.5px] font-bold text-amber-950 uppercase tracking-wider mb-1">
+                {category === 'loan' ? 'Person Name (Who borrowed)' : 'Bill / Payee Name'}
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-amber-500">
+                  <User className="w-4 h-4" />
+                </span>
+                <input
+                  type="text"
+                  required
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  placeholder={
+                    category === 'loan'
+                      ? 'Enter person name (e.g. Kasun)'
+                      : 'Enter bill name (e.g. CEB Electricity)'
+                  }
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-amber-200 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-amber-500 transition"
+                />
+              </div>
+            </div>
+
+            {/* Row 2: Due Date */}
+            <div>
+              <label className="block text-[10.5px] font-bold text-amber-950 uppercase tracking-wider mb-1">
+                {category === 'loan' ? 'Repayment Due Date (නැවත දිය යුතු දිනය)' : 'Payment Due Date'}
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-amber-500">
+                  <Calendar className="w-4 h-4" />
+                </span>
+                <input
+                  type="date"
+                  required
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-amber-200 text-xs font-bold text-slate-800 outline-none focus:border-amber-500 transition"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Submit Button */}
         <button

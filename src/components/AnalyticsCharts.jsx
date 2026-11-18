@@ -13,7 +13,21 @@ import {
   Filler
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { PieChart, TrendingUp, AlertTriangle, CheckCircle, Wallet, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import {
+  PieChart,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  Wallet,
+  ArrowDownLeft,
+  ArrowUpRight,
+  HandCoins,
+  Receipt,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 import { CATEGORIES, formatCurrency, getTodayDateKey } from '../utils/storage';
 
 // Register Chart.js components
@@ -38,6 +52,7 @@ export default function AnalyticsCharts({
   todayPocketRemaining = 0,
   expenses = [],
   inflows = [],
+  onToggleSettledExpense,
 }) {
   const todayKey = getTodayDateKey();
 
@@ -53,6 +68,25 @@ export default function AnalyticsCharts({
   const cashSpendPercent = totalAvailablePocket > 0
     ? Math.min(100, Math.round((todayCashSpent / totalAvailablePocket) * 100))
     : 0;
+
+  // Loans and Bills Data Filter
+  const loanAndBillItems = useMemo(() => {
+    return expenses.filter(
+      (e) => e.category === 'loan' || e.category === 'bills' || e.recipientName || e.dueDate
+    );
+  }, [expenses]);
+
+  const totalLoansGiven = loanAndBillItems
+    .filter((e) => e.category === 'loan')
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+  const totalPendingBills = loanAndBillItems
+    .filter((e) => e.category === 'bills' && !e.isSettled)
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+  const totalPendingLoans = loanAndBillItems
+    .filter((e) => e.category === 'loan' && !e.isSettled)
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
   // Category breakdown
   const categoryData = useMemo(() => {
@@ -70,10 +104,11 @@ export default function AnalyticsCharts({
       '#2563eb', // blue
       '#0284c7', // sky
       '#10b981', // emerald
+      '#f97316', // orange (loan)
+      '#f43f5e', // rose (bills)
       '#f59e0b', // amber
       '#ec4899', // pink
       '#8b5cf6', // purple
-      '#f43f5e', // rose
       '#64748b', // slate
     ];
 
@@ -138,7 +173,7 @@ export default function AnalyticsCharts({
   return (
     <div className="space-y-4">
       
-      {/* 1. Daily Inflow vs Outflow Summary (Requested by user) */}
+      {/* 1. Daily Inflow vs Outflow Summary */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <h3 className="font-black text-slate-800 text-base">
@@ -149,7 +184,7 @@ export default function AnalyticsCharts({
           </span>
         </div>
 
-        {/* 2 Big Stat Cards: Money Received Today & Total Spent Today */}
+        {/* 2 Big Stat Cards */}
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-100/80">
             <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold mb-1">
@@ -211,7 +246,123 @@ export default function AnalyticsCharts({
         </div>
       </div>
 
-      {/* 2. Category Doughnut Chart */}
+      {/* 2. DEDICATED LOANS & BILLS DUE TRACKER (New user requested module!) */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3.5">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <HandCoins className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-black text-slate-800 text-sm sm:text-base">
+                Loans & Bills Tracker
+              </h3>
+              <p className="text-[10.5px] text-slate-400">ණය සහ බිල්පත් කළමනාකරණය</p>
+            </div>
+          </div>
+          <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/80">
+            {loanAndBillItems.filter((i) => !i.isSettled).length} Pending
+          </span>
+        </div>
+
+        {/* 2 Metric Pills: Pending Loans & Pending Bills */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="p-3 rounded-2xl bg-orange-50/80 border border-orange-100">
+            <span className="text-[10px] uppercase font-bold text-orange-700 block">
+              Pending Loans Given
+            </span>
+            <span className="text-base font-black text-orange-950 mt-0.5 block">
+              {formatCurrency(totalPendingLoans, currency)}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-rose-50/80 border border-rose-100">
+            <span className="text-[10px] uppercase font-bold text-rose-700 block">
+              Pending Bills Due
+            </span>
+            <span className="text-base font-black text-rose-950 mt-0.5 block">
+              {formatCurrency(totalPendingBills, currency)}
+            </span>
+          </div>
+        </div>
+
+        {/* List of Loans & Bills */}
+        {loanAndBillItems.length === 0 ? (
+          <div className="py-6 text-center text-slate-400 text-xs">
+            <Receipt className="w-7 h-7 mx-auto mb-1.5 opacity-40" />
+            <p className="font-bold">No loans or bills recorded yet</p>
+            <p className="text-[10px] mt-0.5">Select category "Loan / Given" or "Bills" when adding an expense</p>
+          </div>
+        ) : (
+          <div className="space-y-2 pt-1 max-h-60 overflow-y-auto pr-1">
+            {loanAndBillItems.map((item) => {
+              const isLoan = item.category === 'loan';
+              const isOverdue = item.dueDate && item.dueDate < todayKey && !item.isSettled;
+
+              return (
+                <div
+                  key={item.id}
+                  className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-2.5"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        isLoan ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
+                      }`}
+                    >
+                      {isLoan ? <HandCoins className="w-4 h-4" /> : <Receipt className="w-4 h-4" />}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="font-extrabold text-slate-800 text-xs truncate">
+                        {item.recipientName ? `${item.recipientName} (${item.reason})` : item.reason}
+                      </p>
+                      
+                      <div className="flex items-center gap-1.5 text-[10px] mt-0.5">
+                        {item.dueDate ? (
+                          <span
+                            className={`font-bold flex items-center gap-0.5 ${
+                              isOverdue ? 'text-rose-600' : 'text-slate-500'
+                            }`}
+                          >
+                            <Calendar className="w-3 h-3" />
+                            <span>{isOverdue ? `Overdue: ${item.dueDate}` : `Due: ${item.dueDate}`}</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">No due date</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-black text-xs text-slate-800">
+                      {formatCurrency(item.amount, currency)}
+                    </span>
+
+                    {onToggleSettledExpense && (
+                      <button
+                        type="button"
+                        onClick={() => onToggleSettledExpense(item.id)}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-black transition active:scale-95 ${
+                          item.isSettled
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-slate-200 text-slate-700 hover:bg-emerald-100 hover:text-emerald-700'
+                        }`}
+                        title={item.isSettled ? 'Mark Unsettled' : 'Mark Settled'}
+                      >
+                        {item.isSettled ? 'Settled ✓' : 'Settle'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 3. Category Doughnut Chart */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
@@ -250,7 +401,7 @@ export default function AnalyticsCharts({
 
             {/* Category breakdown pills */}
             <div className="flex flex-wrap gap-1.5 justify-center">
-              {categoryData.labels.slice(0, 5).map((label, idx) => (
+              {categoryData.labels.slice(0, 6).map((label, idx) => (
                 <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-100 text-xs">
                   <span
                     className="w-2 h-2 rounded-full"
@@ -267,7 +418,7 @@ export default function AnalyticsCharts({
         )}
       </div>
 
-      {/* 3. 14-Day Spending Trend */}
+      {/* 4. 14-Day Spending Trend */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-black text-slate-800 text-base flex items-center gap-2">

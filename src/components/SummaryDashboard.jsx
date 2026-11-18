@@ -29,6 +29,7 @@ export default function SummaryDashboard({
   onDeleteGoal,
   onDepositToGoal,
   onWithdrawFromGoal,
+  onToggleSettledExpense,
 }) {
   const todayKey = getTodayDateKey();
 
@@ -202,6 +203,7 @@ export default function SummaryDashboard({
             currency={profile.currency}
             onDeleteExpense={onDeleteExpense}
             onDeleteInflow={onDeleteInflow}
+            onToggleSettledExpense={onToggleSettledExpense}
           />
         </div>
       )}
@@ -231,6 +233,7 @@ export default function SummaryDashboard({
           todayPocketRemaining={todayPocketRemaining}
           expenses={expenses}
           inflows={inflows}
+          onToggleSettledExpense={onToggleSettledExpense}
         />
       )}
 
