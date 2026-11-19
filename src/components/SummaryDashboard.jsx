@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Landmark, Plus, Wallet, PiggyBank, PieChart, Calendar } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
@@ -6,6 +6,7 @@ import ExpensePieChart from './ExpensePieChart';
 import AnalyticsCharts from './AnalyticsCharts';
 import SavingsModule from './SavingsModule';
 import ExpenseCalendar from './ExpenseCalendar';
+import FeedCalendar from './FeedCalendar';
 import { formatCurrency, getTodayDateKey } from '../utils/storage';
 
 export default function SummaryDashboard({
@@ -33,6 +34,7 @@ export default function SummaryDashboard({
   onToggleSettledExpense,
 }) {
   const todayKey = getTodayDateKey();
+  const [selectedFeedDate, setSelectedFeedDate] = useState('all');
 
   // Total Bank Balance
   const totalBankBalance = banks.reduce((sum, b) => sum + (Number(b.balance) || 0), 0);
@@ -190,34 +192,10 @@ export default function SummaryDashboard({
       </div>
 
       {/* TAB CONTENT */}
-      {/* 1. EXPENSES TAB (With Expense Form, Interactive Pie Chart, and Feed) */}
+      {/* 1. EXPENSES TAB (With Expense Form, Interactive Pie Chart, Feed Calendar, and Feed) */}
       {activeTab === 'overview' && (
         <div className="space-y-4">
           
-          {/* Quick Calendar Banner */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('calendar')}
-            className="w-full p-3 rounded-2xl bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 border border-blue-100 hover:border-blue-300 flex items-center justify-between transition active:scale-[0.99] text-left group shadow-2xs"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-black text-slate-800 group-hover:text-blue-700 transition">
-                  Daily Expense Calendar
-                </p>
-                <p className="text-[10px] text-slate-500 font-semibold truncate">
-                  දිනෙන් දින වියදම් බලන්න (Day-by-Day View)
-                </p>
-              </div>
-            </div>
-            <span className="text-[11px] font-black text-blue-600 bg-white px-2 py-1 rounded-lg border border-blue-100 shadow-2xs group-hover:bg-blue-600 group-hover:text-white transition shrink-0">
-              Open Calendar →
-            </span>
-          </button>
-
           {/* Real-time Category Breakdown Pie Chart directly on Summary! */}
           <ExpensePieChart
             expenses={expenses}
@@ -233,11 +211,22 @@ export default function SummaryDashboard({
             onAddExpense={onAddExpense}
           />
 
-          {/* Spacious Transaction Feed */}
+          {/* Beautiful Calendar Directly Above Expenses Feed to Inspect Past Expenses */}
+          <FeedCalendar
+            expenses={expenses}
+            inflows={inflows}
+            currency={profile.currency}
+            selectedDate={selectedFeedDate}
+            onSelectDate={setSelectedFeedDate}
+          />
+
+          {/* Spacious Transaction Feed (Filtered by selected date or all history) */}
           <ExpenseList
             expenses={expenses}
             inflows={inflows}
             currency={profile.currency}
+            selectedDate={selectedFeedDate}
+            onSelectDate={setSelectedFeedDate}
             onDeleteExpense={onDeleteExpense}
             onDeleteInflow={onDeleteInflow}
             onToggleSettledExpense={onToggleSettledExpense}

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PlusCircle, Wallet, CreditCard, Sparkles, AlertCircle, User, Calendar, HandCoins, Receipt } from 'lucide-react';
-import { CATEGORIES, formatCurrency, getTodayDateKey } from '../utils/storage';
+import { CATEGORIES, formatCurrency, getTodayDateKey, formatDisplayDate } from '../utils/storage';
 import { sound } from '../utils/sound';
 
 export default function ExpenseForm({
@@ -14,6 +14,7 @@ export default function ExpenseForm({
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [expenseDate, setExpenseDate] = useState(todayKey);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [category, setCategory] = useState(CATEGORIES[0].id);
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'card'
   const [selectedBankId, setSelectedBankId] = useState(banks[0]?.id || '');
@@ -256,32 +257,52 @@ export default function ExpenseForm({
           )}
         </div>
 
-        {/* Date Selector */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+        {/* Date: Today (Auto) with optional change for past expenses */}
+        <div className="pt-0.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs">
               <Calendar className="w-3.5 h-3.5 text-blue-600" />
-              <span>Expense Date</span>
-            </label>
-            {expenseDate !== todayKey && (
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  setExpenseDate(todayKey);
-                }}
-                className="text-[10.5px] font-bold text-blue-600 hover:underline"
-              >
-                Reset to Today
-              </button>
-            )}
+              <span className="font-semibold text-slate-500">Date:</span>
+              <span className="font-extrabold text-slate-800">
+                {expenseDate === todayKey ? 'Today (Auto)' : formatDisplayDate(expenseDate)}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                setShowDatePicker((prev) => !prev);
+              }}
+              className="text-[10.5px] font-bold text-blue-600 hover:text-blue-700 underline"
+            >
+              {showDatePicker ? 'Close' : (expenseDate === todayKey ? '+ Past Date' : 'Change Date')}
+            </button>
           </div>
-          <input
-            type="date"
-            value={expenseDate}
-            onChange={(e) => setExpenseDate(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs font-bold text-slate-700 outline-none transition"
-          />
+
+          {showDatePicker && (
+            <div className="mt-2 flex items-center gap-2 animate-in fade-in duration-150">
+              <input
+                type="date"
+                value={expenseDate}
+                onChange={(e) => setExpenseDate(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition"
+              />
+              {expenseDate !== todayKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    setExpenseDate(todayKey);
+                    setShowDatePicker(false);
+                  }}
+                  className="px-2.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs whitespace-nowrap"
+                >
+                  Set Today
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Category Selector Chips */}

@@ -7,6 +7,8 @@ export default function ExpenseList({
   expenses = [],
   inflows = [],
   currency = 'Rs.',
+  selectedDate = 'all',
+  onSelectDate,
   onDeleteExpense,
   onDeleteInflow,
   onToggleSettledExpense,
@@ -14,7 +16,6 @@ export default function ExpenseList({
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all'); // 'all' | 'expense' | 'income' | 'loans'
-  const [dateFilter, setDateFilter] = useState('all'); // 'all' | 'today'
   const todayKey = getTodayDateKey();
 
   // Combine expenses and inflows into a unified chronological feed
@@ -31,9 +32,9 @@ export default function ExpenseList({
     })),
   ].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-  // Filter feed
+  // Filter feed by selectedDate (from calendar above) and filterType and search
   const filtered = combinedFeed.filter((item) => {
-    if (dateFilter === 'today' && item.date !== todayKey) return false;
+    if (selectedDate && selectedDate !== 'all' && item.date !== selectedDate) return false;
     if (filterType === 'expense' && item.feedType !== 'expense') return false;
     if (filterType === 'income' && item.feedType !== 'income') return false;
     if (filterType === 'loans' && !(item.category === 'loan' || item.category === 'bills')) return false;
@@ -45,9 +46,13 @@ export default function ExpenseList({
     return true;
   });
 
-  // Calculate totals
-  const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-  const totalInflows = inflows.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+  // Calculate totals for active filtered set
+  const totalExpenses = filtered
+    .filter((i) => i.feedType === 'expense')
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const totalInflows = filtered
+    .filter((i) => i.feedType === 'income')
+    .reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
 
   const handleDelete = (item) => {
     if (item.feedType === 'income') {
@@ -69,11 +74,30 @@ export default function ExpenseList({
       {/* 1. Header with Inflow vs Expense mini totals */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
-          <h2 className="font-black text-slate-800 text-base sm:text-lg">
-            Activity & Expenses Feed
-          </h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-black text-slate-800 text-base sm:text-lg">
+              {selectedDate === 'all'
+                ? 'Activity & Expenses Feed'
+                : `Feed: ${formatDisplayDate(selectedDate)}`}
+            </h2>
+            {selectedDate !== 'all' && (
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onSelectDate && onSelectDate('all');
+                }}
+                className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100 hover:bg-blue-100 flex items-center gap-1 transition active:scale-95"
+                title="Clear date filter to show all history"
+              >
+                <span>Clear Date ✕</span>
+              </button>
+            )}
+          </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Spacious chronological transaction history
+            {selectedDate === 'all'
+              ? 'Spacious chronological transaction history'
+              : `Showing expenses recorded on ${formatDisplayDate(selectedDate)}`}
           </p>
         </div>
 
@@ -137,60 +161,42 @@ export default function ExpenseList({
           </button>
         </div>
 
-        {/* Search & Date Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by reason or person..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 outline-none font-semibold text-slate-700"
-            />
-          </div>
-
-          {/* Quick Date Filter Pill */}
-          <button
-            type="button"
-            onClick={() => {
-              sound.playClick();
-              setDateFilter((prev) => (prev === 'all' ? 'today' : 'all'));
-            }}
-            className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition whitespace-nowrap flex items-center gap-1 ${
-              dateFilter === 'today'
-                ? 'bg-blue-50 border-blue-400 text-blue-700'
-                : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
-            }`}
-            title="Toggle between Today's transactions and All transactions"
-          >
-            <span>{dateFilter === 'today' ? 'Today Only' : 'All Dates'}</span>
-          </button>
-
-          {/* Open Calendar button */}
-          {onOpenCalendar && (
-            <button
-              type="button"
-              onClick={() => {
-                sound.playClick();
-                onOpenCalendar();
-              }}
-              className="py-2 px-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs active:scale-95 whitespace-nowrap"
-              title="Open Day-by-Day Calendar View"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Calendar</span>
-            </button>
-          )}
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by reason or person name..."
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 outline-none font-semibold text-slate-700"
+          />
         </div>
       </div>
 
       {/* 3. Spacious Feed Rows */}
       {filtered.length === 0 ? (
-        <div className="text-center py-10 rounded-2xl bg-slate-50/70 border border-dashed border-slate-200">
+        <div className="text-center py-10 px-4 rounded-2xl bg-slate-50/70 border border-dashed border-slate-200">
           <Wallet className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-          <p className="text-xs font-bold text-slate-600">No transactions recorded yet</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Expenses, loans, and received money will appear here cleanly</p>
+          <p className="text-xs font-bold text-slate-700">
+            {selectedDate !== 'all'
+              ? `No transactions on ${formatDisplayDate(selectedDate)}`
+              : 'No transactions recorded yet'}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {selectedDate !== 'all'
+              ? 'මෙම දිනයට කිසිදු වියදමක් හෝ ලැබීමක් සටහන් වී නැත.'
+              : 'Expenses, loans, and received money will appear here cleanly'}
+          </p>
+          {selectedDate !== 'all' && (
+            <button
+              type="button"
+              onClick={() => onSelectDate && onSelectDate('all')}
+              className="mt-3 px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition active:scale-95 shadow-2xs"
+            >
+              Show All History Feed
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
