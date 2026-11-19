@@ -338,12 +338,12 @@ export default function ExpenseForm({
               {category === 'loan' ? (
                 <>
                   <HandCoins className="w-4 h-4 text-amber-600" />
-                  <span>Loan Details (ණයට දුන් විස්තර)</span>
+                  <span>Loan Details</span>
                 </>
               ) : (
                 <>
                   <Receipt className="w-4 h-4 text-rose-600" />
-                  <span>Bill Due Details (බිල්පත් විස්තර)</span>
+                  <span>Bill Payment Details</span>
                 </>
               )}
             </div>
@@ -375,7 +375,7 @@ export default function ExpenseForm({
             {/* Row 2: Due Date */}
             <div>
               <label className="block text-[10.5px] font-bold text-amber-950 uppercase tracking-wider mb-1">
-                {category === 'loan' ? 'Repayment Due Date (නැවත දිය යුතු දිනය)' : 'Payment Due Date'}
+                {category === 'loan' ? 'Repayment Due Date' : 'Payment Due Date'}
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-amber-500">

@@ -187,7 +187,7 @@ export default function AnalyticsCharts({
                 Daily Money Flow Report
               </h3>
               <p className="text-[10.5px] text-slate-400">
-                දවස පටන් ගනිද්දී, වියදම් සහ ඉවර වෙද්දී ඉතිරි
+                Starting pocket, inflows, spent & day end cash
               </p>
             </div>
           </div>
@@ -199,7 +199,7 @@ export default function AnalyticsCharts({
         {/* 4 Clear Flow Cards: Starting -> Received -> Spent -> Ending Remaining */}
         <div className="grid grid-cols-2 gap-2.5">
           
-          {/* Card 1: Day Starting Cash (දවස පටන් ගනිද්දී කීයද) */}
+          {/* Card 1: Day Starting Cash */}
           <div className="p-3 sm:p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/70">
             <div className="flex items-center gap-1.5 text-amber-800 text-[11px] font-bold mb-1">
               <Sun className="w-3.5 h-3.5 text-amber-600" />
@@ -209,11 +209,11 @@ export default function AnalyticsCharts({
               {formatCurrency(startingPocketMoney, currency)}
             </p>
             <p className="text-[10px] text-amber-700/80 font-bold mt-0.5 truncate">
-              දවස පටන් ගනිද්දී
+              Day Start Balance
             </p>
           </div>
 
-          {/* Card 2: Received Today (ලැබුණු මුදල්) */}
+          {/* Card 2: Received Today */}
           <div className="p-3 sm:p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/70">
             <div className="flex items-center gap-1.5 text-emerald-800 text-[11px] font-bold mb-1">
               <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" />
@@ -223,11 +223,11 @@ export default function AnalyticsCharts({
               +{formatCurrency(todayInflows, currency)}
             </p>
             <p className="text-[10px] text-emerald-700/80 font-bold mt-0.5 truncate">
-              අද ලැබුණු මුදල්
+              Cash In & Deposits
             </p>
           </div>
 
-          {/* Card 3: Total Spent Today (වියදම් කීයද) */}
+          {/* Card 3: Total Spent Today */}
           <div className="p-3 sm:p-3.5 rounded-2xl bg-rose-50/80 border border-rose-200/70">
             <div className="flex items-center gap-1.5 text-rose-800 text-[11px] font-bold mb-1">
               <ArrowUpRight className="w-3.5 h-3.5 text-rose-600" />
@@ -237,11 +237,11 @@ export default function AnalyticsCharts({
               -{formatCurrency(todayTotalSpent, currency)}
             </p>
             <p className="text-[10px] text-rose-700/80 font-bold mt-0.5 truncate">
-              අද ගිය මුළු වියදම
+              Total Expenses Outflow
             </p>
           </div>
 
-          {/* Card 4: Day End Remaining (දවස ඉවර වෙද්දී ඉතිරි) */}
+          {/* Card 4: Day End Remaining */}
           <div className="p-3 sm:p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200/70">
             <div className="flex items-center gap-1.5 text-indigo-800 text-[11px] font-bold mb-1">
               <Moon className="w-3.5 h-3.5 text-indigo-600" />
@@ -251,7 +251,7 @@ export default function AnalyticsCharts({
               {formatCurrency(todayPocketRemaining, currency)}
             </p>
             <p className="text-[10px] text-indigo-700/80 font-bold mt-0.5 truncate">
-              දවස ඉවර වෙද්දී ඉතිරි
+              Remaining Pocket Cash
             </p>
           </div>
 
@@ -295,7 +295,7 @@ export default function AnalyticsCharts({
               <h3 className="font-black text-slate-800 text-sm sm:text-base">
                 Loans & Bills Tracker
               </h3>
-              <p className="text-[10.5px] text-slate-400">ණය සහ බිල්පත් කළමනාකරණය</p>
+              <p className="text-[10.5px] text-slate-400">Track loans given and pending utility bills</p>
             </div>
           </div>
           <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/80">

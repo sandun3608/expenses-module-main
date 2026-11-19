@@ -202,7 +202,7 @@ export default function FeedCalendar({
               </span>
             </div>
             <p className="text-[10.5px] text-slate-400 font-semibold truncate">
-              පසුගිය වියදම් දිනෙන් දින බලන්න (Past Expenses History)
+              Browse Past Expenses & Inflows by Date
             </p>
           </div>
         </div>

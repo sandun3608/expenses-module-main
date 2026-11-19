@@ -74,9 +74,25 @@ export const storage = {
           const localUsers = storage.getUsers();
           const userMap = new Map();
 
-          // Merge local and cloud server accounts
+          // Merge local and cloud server accounts intelligently
           localUsers.forEach((u) => userMap.set(u.id, u));
-          data.users.forEach((u) => userMap.set(u.id, u));
+          data.users.forEach((remoteUser) => {
+            const localUser = userMap.get(remoteUser.id);
+            if (!localUser) {
+              userMap.set(remoteUser.id, remoteUser);
+            } else {
+              // Combine dailySessions, expenses, and fields so local sessions aren't wiped
+              const mergedSessions = {
+                ...(remoteUser.dailySessions || {}),
+                ...(localUser.dailySessions || {}),
+              };
+              userMap.set(remoteUser.id, {
+                ...remoteUser,
+                ...localUser,
+                dailySessions: mergedSessions,
+              });
+            }
+          });
 
           const merged = Array.from(userMap.values());
           localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(merged));

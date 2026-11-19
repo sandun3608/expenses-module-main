@@ -85,14 +85,19 @@ export default function App() {
   // Helper to mutate active user fields in state and storage
   const updateCurrentUserFields = (updatedFields) => {
     if (!currentUser) return;
+    let targetUpdated = null;
     const updatedUsers = users.map((u) => {
       if (u.id === currentUser.id) {
-        return { ...u, ...updatedFields };
+        targetUpdated = { ...u, ...updatedFields };
+        return targetUpdated;
       }
       return u;
     });
     storage.setUsers(updatedUsers);
     setUsers(updatedUsers);
+    if (targetUpdated) {
+      storage.syncUserToServer(targetUpdated);
+    }
   };
 
   // Switch / Logout active profile

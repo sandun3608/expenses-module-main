@@ -185,7 +185,7 @@ export default function ExpenseList({
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5">
             {selectedDate !== 'all'
-              ? 'මෙම දිනයට කිසිදු වියදමක් හෝ ලැබීමක් සටහන් වී නැත.'
+              ? 'No expenses or income recorded on this date.'
               : 'Expenses, loans, and received money will appear here cleanly'}
           </p>
           {selectedDate !== 'all' && (
@@ -199,7 +199,7 @@ export default function ExpenseList({
           )}
         </div>
       ) : (
-        <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
           {filtered.map((item) => {
             const isIncome = item.feedType === 'income';
             const isLoan = item.category === 'loan';
@@ -209,12 +209,12 @@ export default function ExpenseList({
             return (
               <div
                 key={item.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition shadow-2xs gap-2 sm:gap-3"
+                className="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition shadow-2xs gap-2.5 sm:gap-3 group"
               >
                 {/* Left: Icon & Description */}
-                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                   <div
-                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center font-black text-xs sm:text-sm shrink-0 shadow-2xs ${
                       isIncome
                         ? 'bg-emerald-100 text-emerald-700'
                         : isLoan
@@ -225,94 +225,95 @@ export default function ExpenseList({
                     }`}
                   >
                     {isIncome ? (
-                      <ArrowDownLeft className="w-5 h-5 stroke-[2.5]" />
+                      <ArrowDownLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.5]" />
                     ) : isLoan ? (
-                      <HandCoins className="w-5 h-5 stroke-[2.2]" />
+                      <HandCoins className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
                     ) : isBill ? (
-                      <Receipt className="w-5 h-5 stroke-[2.2]" />
+                      <Receipt className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
                     ) : (
                       catObj.label.slice(0, 1)
                     )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="font-extrabold text-slate-800 text-sm sm:text-base leading-snug truncate">
-                      {item.reason}
-                    </p>
-
-                    {/* Metadata chips */}
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mt-1">
-                      <span className="font-semibold text-slate-600">
-                        {item.date === todayKey ? 'Today' : formatDisplayDate(item.date)}
-                      </span>
-                      {item.time && <span>• {item.time}</span>}
-                      <span>•</span>
-
-                      {/* Source tag */}
-                      {isIncome ? (
-                        <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px]">
-                          {item.destination === 'pocket' ? '💵 Cash Inflow' : `🏦 Bank: ${item.bankName || 'Deposit'}`}
-                        </span>
-                      ) : (
-                        <span className="font-bold text-slate-600 bg-slate-200/60 px-2 py-0.5 rounded-md text-[10px]">
-                          {item.paymentMethod === 'card' ? `💳 ${item.bankName || 'Bank'}` : '💵 Pocket Cash'}
-                        </span>
-                      )}
-
-                      {/* Loan / Bill Person Name Badge */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-extrabold text-slate-800 text-xs sm:text-[13px] leading-tight truncate">
+                        {item.reason}
+                      </p>
                       {item.recipientName && (
-                        <span className="font-extrabold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-md text-[10.5px]">
+                        <span className="font-bold text-[9.5px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-md shrink-0">
                           👤 {item.recipientName}
                         </span>
                       )}
-
-                      {/* Due Date Badge */}
-                      {item.dueDate && (
-                        <span className="font-bold text-slate-700 bg-slate-200/80 px-2 py-0.5 rounded-md text-[10px]">
-                          📅 Due: {item.dueDate}
+                      {isLoan && item.isSettled && (
+                        <span className="font-bold text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-md shrink-0">
+                          Repaid ✓
                         </span>
+                      )}
+                    </div>
+
+                    {/* Metadata line */}
+                    <div className="flex items-center gap-1.5 text-[10px] sm:text-[10.5px] text-slate-400 font-semibold mt-0.5 truncate">
+                      <span>{item.date === todayKey ? (item.time || 'Today') : formatDisplayDate(item.date)}</span>
+                      <span>•</span>
+                      {isIncome ? (
+                        <span className="text-emerald-700 font-bold">
+                          {item.destination === 'pocket' ? '💵 Cash' : `🏦 ${item.bankName || 'Bank'}`}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600 font-semibold">
+                          {item.paymentMethod === 'card' ? `💳 ${item.bankName || 'Bank'}` : '💵 Cash'}
+                        </span>
+                      )}
+                      {item.dueDate && (
+                        <>
+                          <span>•</span>
+                          <span className="text-amber-700 font-bold">Due: {item.dueDate}</span>
+                        </>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Right: Amount, Settled Toggle, and Delete */}
-                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                  
-                  {/* Settled / Mark Paid Button for Loans and Bills */}
-                  {(isLoan || isBill) && onToggleSettledExpense && (
-                    <button
-                      type="button"
-                      onClick={() => onToggleSettledExpense(item.id)}
-                      className={`px-2 py-1 rounded-lg text-[10.5px] font-black transition flex items-center gap-1 active:scale-95 ${
-                        item.isSettled
-                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                          : 'bg-amber-100 text-amber-800 hover:bg-emerald-100 hover:text-emerald-800'
-                      }`}
-                      title={item.isSettled ? 'Mark as Unsettled' : 'Mark as Settled / Paid'}
-                    >
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>{item.isSettled ? 'Settled ✓' : 'Mark Settled'}</span>
-                    </button>
-                  )}
-
+                {/* Right: Amount & Action Micro-Buttons */}
+                <div className="flex flex-col items-end justify-center shrink-0 text-right pl-2">
                   <span
-                    className={`font-black text-sm sm:text-base tracking-tight ${
-                      isIncome ? 'text-emerald-600' : 'text-rose-600'
+                    className={`font-black text-xs sm:text-sm tracking-tight leading-tight ${
+                      isIncome ? 'text-emerald-600' : 'text-slate-900'
                     }`}
                   >
-                    {isIncome ? '+' : '-'} {formatCurrency(item.amount, currency)}
+                    {isIncome ? '+' : '-'}{formatCurrency(item.amount, currency)}
                   </span>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(item)}
-                    className="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 transition"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1 mt-1">
+                    {/* Settle / Repay Toggle for Loans & Bills */}
+                    {(isLoan || isBill) && onToggleSettledExpense && (
+                      <button
+                        type="button"
+                        onClick={() => onToggleSettledExpense(item.id)}
+                        className={`w-5 h-5 rounded-md flex items-center justify-center transition ${
+                          item.isSettled
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-slate-100 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                        }`}
+                        title={item.isSettled ? 'Mark as Unsettled' : 'Mark as Settled / Paid'}
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                      </button>
+                    )}
+
+                    {/* Delete button */}
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item)}
+                      className="w-5 h-5 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition"
+                      title="Delete transaction"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
+
               </div>
             );
           })}

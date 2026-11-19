@@ -646,7 +646,7 @@ export default function ExpenseCalendar({
                 No transactions recorded on this date 🎉
               </p>
               <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
-                මෙම දිනයේ කිසිදු වියදමක් වාර්තා වී නොමැත. Click "Add Expense" to log an expense for this day.
+                No transactions recorded on this day. Tap "Add Expense" to log an expense.
               </p>
               <button
                 type="button"
