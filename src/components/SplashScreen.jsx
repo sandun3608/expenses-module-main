@@ -41,7 +41,7 @@ export default function SplashScreen({ onFinish }) {
 
         {/* Brand Name */}
         <h1 className="text-2xl font-black tracking-tight text-slate-900 mb-0.5">
-          Exchange Manager
+          Expenses Manager
         </h1>
         <p className="text-xs font-bold text-slate-400 mb-6">
           Daily Finance & Vault

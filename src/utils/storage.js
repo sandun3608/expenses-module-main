@@ -1,4 +1,4 @@
-// LocalStorage & Cloud Database Manager for Exchange Manager app
+// LocalStorage & Cloud Database Manager for Expenses Manager app
 // Multi-User, Multi-Device Cloud Sync, 4-digit PIN authentication, Admin portal, and reliable persistence
 
 const STORAGE_KEYS = {

@@ -44,7 +44,7 @@ export default function ProfileSelectScreen({
 
             {/* Centered App Name in Pure White */}
             <h1 className="text-xl font-black text-white tracking-tight leading-tight">
-              Exchange Manager
+              Expenses Manager
             </h1>
             <p className="text-xs font-bold text-blue-100/90 mt-0.5">
               Daily Finance & Expenses

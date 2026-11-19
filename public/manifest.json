@@ -1,13 +1,13 @@
 {
-  "name": "Exchange Manager",
-  "short_name": "Exchange",
+  "name": "Expenses Manager",
+  "short_name": "Expenses",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
-  "description": "Exchange Manager - Daily Expenses, Bank Manager & Savings Vault",
+  "description": "Expenses Manager - Daily Expenses, Bank Manager & Savings Vault",
   "icons": [
     {
       "src": "/apple-touch-icon.png",
