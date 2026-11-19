@@ -29,20 +29,19 @@ const saveDb = (data) => {
   }
 };
 
-const apiPlugin = () => ({
-  name: 'api-server-middleware',
-  configureServer(server) {
-    server.middlewares.use(async (req, res, next) => {
-      const url = req.url?.split('?')[0];
-      if (url === '/api/data' && req.method === 'GET') {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(getDb()));
-        return;
-      }
-      if (url === '/api/users' && req.method === 'POST') {
-        let body = '';
-        req.on('data', (c) => (body += c));
-        req.on('end', () => {
+const apiPlugin = () => {
+  const handler = (req, res, next) => {
+    const url = req.url?.split('?')[0];
+    if (url === '/api/data' && req.method === 'GET') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(getDb()));
+      return;
+    }
+    if (url === '/api/users' && req.method === 'POST') {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        try {
           const parsed = JSON.parse(body || '{}');
           const db = getDb();
           if (Array.isArray(parsed.users)) {
@@ -50,17 +49,21 @@ const apiPlugin = () => ({
             saveDb(db);
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ success: true, count: db.users.length }));
-          } else {
-            res.statusCode = 400;
-            res.end('users array required');
+            return;
           }
-        });
-        return;
-      }
-      if (url === '/api/user' && req.method === 'POST') {
-        let body = '';
-        req.on('data', (c) => (body += c));
-        req.on('end', () => {
+        } catch (e) {
+          console.error('Error parsing /api/users body:', e);
+        }
+        res.statusCode = 400;
+        res.end('users array required');
+      });
+      return;
+    }
+    if (url === '/api/user' && req.method === 'POST') {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        try {
           const parsed = JSON.parse(body || '{}');
           if (parsed.user && parsed.user.id) {
             const db = getDb();
@@ -70,17 +73,21 @@ const apiPlugin = () => ({
             saveDb(db);
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ success: true, user: parsed.user }));
-          } else {
-            res.statusCode = 400;
-            res.end('user required');
+            return;
           }
-        });
-        return;
-      }
-      if (url === '/api/user/delete' && req.method === 'POST') {
-        let body = '';
-        req.on('data', (c) => (body += c));
-        req.on('end', () => {
+        } catch (e) {
+          console.error('Error parsing /api/user body:', e);
+        }
+        res.statusCode = 400;
+        res.end('user required');
+      });
+      return;
+    }
+    if (url === '/api/user/delete' && req.method === 'POST') {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        try {
           const parsed = JSON.parse(body || '{}');
           if (parsed.id) {
             const db = getDb();
@@ -88,17 +95,51 @@ const apiPlugin = () => ({
             saveDb(db);
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ success: true, deletedId: parsed.id }));
-          } else {
-            res.statusCode = 400;
-            res.end('id required');
+            return;
           }
-        });
-        return;
-      }
-      next();
-    });
-  },
-});
+        } catch (e) {
+          console.error('Error parsing /api/user/delete body:', e);
+        }
+        res.statusCode = 400;
+        res.end('id required');
+      });
+      return;
+    }
+    if (url === '/api/admin/pw' && req.method === 'POST') {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        try {
+          const parsed = JSON.parse(body || '{}');
+          if (parsed.password) {
+            const db = getDb();
+            db.adminPassword = parsed.password;
+            saveDb(db);
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: true }));
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing /api/admin/pw body:', e);
+        }
+        res.statusCode = 400;
+        res.end('password required');
+      });
+      return;
+    }
+    next();
+  };
+
+  return {
+    name: 'api-server-middleware',
+    configureServer(server) {
+      server.middlewares.use(handler);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handler);
+    },
+  };
+};
 
 export default defineConfig({
   plugins: [
@@ -106,6 +147,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    host: true,
+    port: 5173,
+  },
   build: {
     chunkSizeWarningLimit: 1200,
   },

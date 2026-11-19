@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Trash2, Search, ArrowDownLeft, ArrowUpRight, Clock, Wallet, Landmark, HandCoins, Receipt, CheckCircle2, AlertCircle } from 'lucide-react';
-import { CATEGORIES, formatCurrency, getTodayDateKey } from '../utils/storage';
+import { Trash2, Search, ArrowDownLeft, ArrowUpRight, Clock, Wallet, Landmark, HandCoins, Receipt, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
+import { CATEGORIES, formatCurrency, getTodayDateKey, formatDisplayDate } from '../utils/storage';
 import { sound } from '../utils/sound';
 
 export default function ExpenseList({
@@ -10,9 +10,11 @@ export default function ExpenseList({
   onDeleteExpense,
   onDeleteInflow,
   onToggleSettledExpense,
+  onOpenCalendar,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all'); // 'all' | 'expense' | 'income' | 'loans'
+  const [dateFilter, setDateFilter] = useState('all'); // 'all' | 'today'
   const todayKey = getTodayDateKey();
 
   // Combine expenses and inflows into a unified chronological feed
@@ -31,6 +33,7 @@ export default function ExpenseList({
 
   // Filter feed
   const filtered = combinedFeed.filter((item) => {
+    if (dateFilter === 'today' && item.date !== todayKey) return false;
     if (filterType === 'expense' && item.feedType !== 'expense') return false;
     if (filterType === 'income' && item.feedType !== 'income') return false;
     if (filterType === 'loans' && !(item.category === 'loan' || item.category === 'bills')) return false;
@@ -134,16 +137,51 @@ export default function ExpenseList({
           </button>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by reason or person name..."
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 outline-none font-semibold text-slate-700"
-          />
+        {/* Search & Date Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by reason or person..."
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 outline-none font-semibold text-slate-700"
+            />
+          </div>
+
+          {/* Quick Date Filter Pill */}
+          <button
+            type="button"
+            onClick={() => {
+              sound.playClick();
+              setDateFilter((prev) => (prev === 'all' ? 'today' : 'all'));
+            }}
+            className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition whitespace-nowrap flex items-center gap-1 ${
+              dateFilter === 'today'
+                ? 'bg-blue-50 border-blue-400 text-blue-700'
+                : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
+            }`}
+            title="Toggle between Today's transactions and All transactions"
+          >
+            <span>{dateFilter === 'today' ? 'Today Only' : 'All Dates'}</span>
+          </button>
+
+          {/* Open Calendar button */}
+          {onOpenCalendar && (
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                onOpenCalendar();
+              }}
+              className="py-2 px-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs active:scale-95 whitespace-nowrap"
+              title="Open Day-by-Day Calendar View"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Calendar</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -198,7 +236,10 @@ export default function ExpenseList({
 
                     {/* Metadata chips */}
                     <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mt-1">
-                      <span>{item.time || 'Today'}</span>
+                      <span className="font-semibold text-slate-600">
+                        {item.date === todayKey ? 'Today' : formatDisplayDate(item.date)}
+                      </span>
+                      {item.time && <span>• {item.time}</span>}
                       <span>•</span>
 
                       {/* Source tag */}

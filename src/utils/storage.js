@@ -31,6 +31,30 @@ export const getTodayDateKey = () => {
   return `${year}-${month}-${day}`;
 };
 
+export const formatDateKey = (d) => {
+  const dateObj = d instanceof Date ? d : new Date(d);
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const formatDisplayDate = (dateKey) => {
+  if (!dateKey) return '';
+  const parts = dateKey.split('-');
+  if (parts.length !== 3) return dateKey;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]) - 1;
+  const day = Number(parts[2]);
+  const d = new Date(year, month, day);
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
 export const formatCurrency = (amount, symbol = 'Rs.') => {
   const num = Number(amount) || 0;
   return `${symbol} ${num.toLocaleString('en-US', {

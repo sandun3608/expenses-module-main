@@ -1,10 +1,11 @@
 import React from 'react';
-import { Landmark, Plus, Wallet, PiggyBank, PieChart } from 'lucide-react';
+import { Landmark, Plus, Wallet, PiggyBank, PieChart, Calendar } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
 import ExpensePieChart from './ExpensePieChart';
 import AnalyticsCharts from './AnalyticsCharts';
 import SavingsModule from './SavingsModule';
+import ExpenseCalendar from './ExpenseCalendar';
 import { formatCurrency, getTodayDateKey } from '../utils/storage';
 
 export default function SummaryDashboard({
@@ -138,41 +139,53 @@ export default function SummaryDashboard({
       </div>
 
       {/* 2. SEGMENTED APP TABS (iOS Pill Switcher) */}
-      <div className="flex p-1 rounded-2xl bg-slate-200/80">
+      <div className="grid grid-cols-4 p-1 rounded-2xl bg-slate-200/80 gap-0.5 sm:gap-1">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
+          className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition ${
             activeTab === 'overview'
               ? 'bg-white text-blue-700 shadow-sm'
               : 'text-slate-600 hover:text-slate-800'
           }`}
         >
-          <Wallet className="w-3.5 h-3.5" />
-          <span>Expenses</span>
+          <Wallet className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Expenses</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('calendar')}
+          className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition ${
+            activeTab === 'calendar'
+              ? 'bg-white text-blue-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-800'
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5 shrink-0 text-blue-600" />
+          <span className="truncate">Calendar</span>
         </button>
 
         <button
           onClick={() => setActiveTab('savings')}
-          className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
+          className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition ${
             activeTab === 'savings'
               ? 'bg-white text-blue-700 shadow-sm'
               : 'text-slate-600 hover:text-slate-800'
           }`}
         >
-          <PiggyBank className="w-3.5 h-3.5" />
-          <span>Savings</span>
+          <PiggyBank className="w-3.5 h-3.5 shrink-0 text-pink-500" />
+          <span className="truncate">Savings</span>
         </button>
 
         <button
           onClick={() => setActiveTab('analytics')}
-          className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
+          className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition ${
             activeTab === 'analytics'
               ? 'bg-white text-blue-700 shadow-sm'
               : 'text-slate-600 hover:text-slate-800'
           }`}
         >
-          <PieChart className="w-3.5 h-3.5" />
-          <span>Reports</span>
+          <PieChart className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
+          <span className="truncate">Reports</span>
         </button>
       </div>
 
@@ -181,6 +194,30 @@ export default function SummaryDashboard({
       {activeTab === 'overview' && (
         <div className="space-y-4">
           
+          {/* Quick Calendar Banner */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('calendar')}
+            className="w-full p-3 rounded-2xl bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 border border-blue-100 hover:border-blue-300 flex items-center justify-between transition active:scale-[0.99] text-left group shadow-2xs"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-black text-slate-800 group-hover:text-blue-700 transition">
+                  Daily Expense Calendar
+                </p>
+                <p className="text-[10px] text-slate-500 font-semibold truncate">
+                  දිනෙන් දින වියදම් බලන්න (Day-by-Day View)
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-black text-blue-600 bg-white px-2 py-1 rounded-lg border border-blue-100 shadow-2xs group-hover:bg-blue-600 group-hover:text-white transition shrink-0">
+              Open Calendar →
+            </span>
+          </button>
+
           {/* Real-time Category Breakdown Pie Chart directly on Summary! */}
           <ExpensePieChart
             expenses={expenses}
@@ -204,8 +241,25 @@ export default function SummaryDashboard({
             onDeleteExpense={onDeleteExpense}
             onDeleteInflow={onDeleteInflow}
             onToggleSettledExpense={onToggleSettledExpense}
+            onOpenCalendar={() => setActiveTab('calendar')}
           />
         </div>
+      )}
+
+      {/* 2. CALENDAR TAB (Day-by-Day Expense Calendar & Inspector) */}
+      {activeTab === 'calendar' && (
+        <ExpenseCalendar
+          expenses={expenses}
+          inflows={inflows}
+          currency={profile.currency}
+          banks={banks}
+          frequentReasons={frequentReasons}
+          onAddExpense={onAddExpense}
+          onDeleteExpense={onDeleteExpense}
+          onDeleteInflow={onDeleteInflow}
+          onToggleSettledExpense={onToggleSettledExpense}
+          todayPocketRemaining={todayPocketRemaining}
+        />
       )}
 
       {/* 2. SAVINGS */}

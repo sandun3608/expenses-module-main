@@ -324,7 +324,9 @@ export default function App() {
     bankName,
     recipientName,
     dueDate,
+    date,
   }) => {
+    const targetDate = date || todayKey;
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
@@ -339,7 +341,7 @@ export default function App() {
       recipientName: recipientName || null,
       dueDate: dueDate || null,
       isSettled: false,
-      date: todayKey,
+      date: targetDate,
       time: timeStr,
       timestamp: Date.now(),
     };
